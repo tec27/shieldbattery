@@ -26,9 +26,9 @@ import throttleMiddleware from '../throttle/middleware'
 import { findUsersByIdAsMap } from '../users/user-model'
 import { joiUserId } from '../users/user-validators'
 import { validateRequest } from '../validation/joi-validator'
-import { GameLoader } from './game-loader'
 import { countCompletedGames } from './game-models'
 import GameResultService, { GameResultServiceError } from './game-result-service'
+import { LegacyGameLoader } from './legacy-game-loader'
 
 const throttle = createThrottle('games', {
   rate: 20,
@@ -131,7 +131,7 @@ export class GameApi {
   constructor(
     private gameResultService: GameResultService,
     @inject('upsertUserIp') private upsertUserIp: UpsertUserIp,
-    private gameLoader: GameLoader,
+    private gameLoader: LegacyGameLoader,
   ) {}
 
   @httpGet('/:gameId')

@@ -160,7 +160,7 @@ export interface GameLoadRequest {
 }
 
 @singleton()
-export class GameLoader {
+export class LegacyGameLoader {
   // Maps game id -> loading data
   private loadingGames = IMap<string, LoadingData>()
 

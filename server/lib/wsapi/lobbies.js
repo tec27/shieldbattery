@@ -22,8 +22,8 @@ import {
 } from '../../../common/lobbies'
 import * as Slots from '../../../common/lobbies/slot'
 import { toBasicChannelInfo } from '../chat/chat-models'
-import { GameLoader } from '../games/game-loader'
 import { GameplayActivityRegistry } from '../games/gameplay-activity-registry'
+import { LegacyGameLoader } from '../games/legacy-game-loader'
 import * as Lobbies from '../lobbies/lobby'
 import { getMapInfo } from '../maps/map-models'
 import { reparseMapsAsNeeded } from '../maps/map-operations'
@@ -68,7 +68,7 @@ export class LobbyApi {
     this.userSockets = userSockets
     this.clientSockets = clientSockets
     this.activityRegistry = container.resolve(GameplayActivityRegistry)
-    this.gameLoader = container.resolve(GameLoader)
+    this.gameLoader = container.resolve(LegacyGameLoader)
     this.lobbies = new Map()
     this.lobbyClients = new Map()
     this.lobbyBannedUsers = new Map()

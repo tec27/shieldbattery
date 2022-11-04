@@ -37,8 +37,8 @@ import { RaceChar } from '../../../common/races'
 import { randomInt, randomItem } from '../../../common/random'
 import { urlPath } from '../../../common/urls'
 import { SbUserId } from '../../../common/users/sb-user'
-import { GameLoader, GameLoaderError } from '../games/game-loader'
 import { GameplayActivityRegistry } from '../games/gameplay-activity-registry'
+import { GameLoaderError, LegacyGameLoader } from '../games/legacy-game-loader'
 import logger from '../logging/logger'
 import { getMapInfo } from '../maps/map-models'
 import {
@@ -505,7 +505,7 @@ export class MatchmakingService {
     private clientSocketsManager: ClientSocketsManager,
     private matchmakingStatus: MatchmakingStatusService,
     private activityRegistry: GameplayActivityRegistry,
-    private gameLoader: GameLoader,
+    private gameLoader: LegacyGameLoader,
     @inject(IN_PARTY_CHECKER) private inPartyChecker: InPartyChecker,
     private matchmakingSeasonsService: MatchmakingSeasonsService,
     private clock: Clock,
