@@ -5,6 +5,11 @@ import { ClientSocketsGroup } from '../websockets/socket-groups'
 @singleton()
 export class GameplayActivityRegistry {
   private userClients = new Map<SbUserId, ClientSocketsGroup>()
+  private onClientClose = (client: ClientSocketsGroup) => {
+    if (this.userClients.get(client.userId) === client) {
+      this.userClients.delete(client.userId)
+    }
+  }
 
   /**
    * Attempts to register a client as owning the active gameplay activity for a user.
@@ -16,6 +21,7 @@ export class GameplayActivityRegistry {
       return false
     }
 
+    client.once('close', this.onClientClose)
     this.userClients.set(userId, client)
     return true
   }

@@ -81,18 +81,34 @@ export interface GameConfigPlayer {
   id: SbUserId
   race: RaceChar
   isComputer: boolean
+  /**
+   * The number of the player's slot (also referred to as BW's Player ID), between 0 and 7. This was
+   * not included in earlier versions of the data, and so may not be present on entries retrieved
+   * from the database.
+   *
+   * @see LegacyGameConfigPlayer
+   */
+  slotNumber: number
 }
 
-interface BaseGameConfig<Source extends GameSource, SourceExtra> {
+export interface LegacyGameConfigPlayer {
+  id: SbUserId
+  race: RaceChar
+  isComputer: boolean
+}
+
+export type PossiblyLegacyGameConfigPlayer = GameConfigPlayer | LegacyGameConfigPlayer
+
+interface BaseGameConfig<Source extends GameSource, SourceExtra, UseLegacy extends boolean> {
   gameSource: Source
   gameSourceExtra: SourceExtra
   gameType: GameType
   gameSubType: number
-  teams: GameConfigPlayer[][]
+  teams: UseLegacy extends false ? GameConfigPlayer[][] : PossiblyLegacyGameConfigPlayer[][]
 }
 
-export type LobbyGameConfig = SetOptional<
-  BaseGameConfig<GameSource.Lobby, undefined>,
+export type LobbyGameConfig<PossiblyLegacy extends boolean = false> = SetOptional<
+  BaseGameConfig<GameSource.Lobby, undefined, PossiblyLegacy>,
   'gameSourceExtra'
 >
 
@@ -111,9 +127,15 @@ export interface MatchmakingExtra2v2 {
 
 export type MatchmakingExtra = MatchmakingExtra1v1 | MatchmakingExtra2v2
 
-export type MatchmakingGameConfig = BaseGameConfig<GameSource.Matchmaking, MatchmakingExtra>
+export type MatchmakingGameConfig<PossiblyLegacy extends boolean = false> = BaseGameConfig<
+  GameSource.Matchmaking,
+  MatchmakingExtra,
+  PossiblyLegacy
+>
 
-export type GameConfig = LobbyGameConfig | MatchmakingGameConfig
+export type GameConfig<PossiblyLegacy extends boolean = false> =
+  | LobbyGameConfig<PossiblyLegacy>
+  | MatchmakingGameConfig<PossiblyLegacy>
 
 /** Returns the type of the `gameSourceExtra` param for a given `GameSource` type. */
 export type GameSourceExtraType<Source extends GameSource> = (GameConfig & {

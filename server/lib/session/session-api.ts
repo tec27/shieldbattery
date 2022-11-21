@@ -130,8 +130,10 @@ export class SessionApi {
       const banHistory = await retrieveBanHistory(user.id, 1)
       const banEntry = banHistory.length ? banHistory[0] : undefined
       throw new UserApiError(UserErrorCode.AccountBanned, 'This account has been banned', {
-        reason: banEntry?.reason,
-        expiration: Number(banEntry?.endTime),
+        data: {
+          reason: banEntry?.reason,
+          expiration: Number(banEntry?.endTime),
+        },
       })
     } else if (await this.userIdentifierManager.banUserIfNeeded(user.id)) {
       // NOTE(tec27): We make sure to do this check *after* checking the account ban only, otherwise
@@ -139,8 +141,10 @@ export class SessionApi {
       const banHistory = await retrieveBanHistory(user.id, 1)
       const banEntry = banHistory.length ? banHistory[0] : undefined
       throw new UserApiError(UserErrorCode.AccountBanned, 'This account has been banned', {
-        reason: banEntry?.reason,
-        expiration: Number(banEntry?.endTime),
+        data: {
+          reason: banEntry?.reason,
+          expiration: Number(banEntry?.endTime),
+        },
       })
     }
 

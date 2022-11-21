@@ -13,7 +13,7 @@ use once_cell::sync::OnceCell;
 use bw_dat::dialog::Dialog;
 use bw_dat::{Unit, UnitId};
 
-use crate::app_messages::GameSetupInfo;
+use crate::app_messages::{GameSetupInfo, SbUserId};
 use crate::bw::{self, get_bw, Bw, StormPlayerId};
 use crate::forge;
 use crate::replay;
@@ -40,7 +40,7 @@ static PLAYER_ID_MAPPING: OnceCell<Vec<PlayerIdMapping>> = OnceCell::new();
 pub struct PlayerIdMapping {
     /// None at least for observers
     pub game_id: Option<u8>,
-    pub sb_user_id: u32,
+    pub sb_user_id: SbUserId,
 }
 
 pub fn set_sbat_replay_data(data: replay::SbatReplayData) {
@@ -552,7 +552,7 @@ pub unsafe fn after_status_screen_update(bw: &dyn Bw, status_screen: Dialog, uni
                 let existing_text = rank_status.string();
                 if rank_status.is_hidden()
                     || existing_text.starts_with("Stacked")
-                    || existing_text == ""
+                    || existing_text.is_empty()
                 {
                     use std::io::Write;
 

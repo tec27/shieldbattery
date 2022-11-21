@@ -57,11 +57,7 @@ interface GameLoadErrorTypeToData {
 export class GameLoaderError<T extends GameLoadErrorType> extends CodedError<
   T,
   GameLoadErrorTypeToData[T]
-> {
-  constructor(code: T, message: string, data: GameLoadErrorTypeToData[T]) {
-    super(code, message, data)
-  }
-}
+> {}
 
 function generateSeed() {
   // BWChart and some other replay sites/libraries utilize the random seed as the date the game was
@@ -279,7 +275,9 @@ export class LegacyGameLoader {
     return this.maybeCancelLoadingFromSystem(
       gameId,
       new GameLoaderError(GameLoadErrorType.PlayerFailed, `${playerName} failed to load`, {
-        userId: loadingPlayer.userId,
+        data: {
+          userId: loadingPlayer.userId,
+        },
       }),
     )
   }
@@ -390,10 +388,10 @@ export class LegacyGameLoader {
       } = route
       return result
         .update(p1Slot, List(), val =>
-          val.push({ for: p2Slot.id, server, routeId, playerId: p1Id }),
+          val.push({ for: p2Slot.userId, server, routeId, playerId: p1Id }),
         )
         .update(p2Slot, List(), val =>
-          val.push({ for: p1Slot.id, server, routeId, playerId: p2Id }),
+          val.push({ for: p1Slot.userId, server, routeId, playerId: p2Id }),
         )
     }, IMap<Slot, List<GameRoute>>())
 

@@ -3,7 +3,12 @@ import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 import { ReadonlyDeep } from 'type-fest'
 import { assertUnreachable } from '../../common/assert-unreachable'
-import { GameConfigPlayer, GameSource, isTeamType } from '../../common/games/configuration'
+import {
+  GameConfigPlayer,
+  GameSource,
+  isTeamType,
+  PossiblyLegacyGameConfigPlayer,
+} from '../../common/games/configuration'
 import { GameRecordJson, getGameDurationString, getGameTypeLabel } from '../../common/games/games'
 import {
   getResultLabel,
@@ -655,7 +660,7 @@ const StyledPointsChangeText = styled(MmrChangeText)`
 
 export interface PlayerResultProps {
   className?: string
-  config: GameConfigPlayer
+  config: PossiblyLegacyGameConfigPlayer
   result?: ReconciledPlayerResult
   mmrChange?: ReadonlyDeep<PublicMatchmakingRatingChangeJson>
 }

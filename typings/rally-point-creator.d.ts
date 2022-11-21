@@ -1,7 +1,7 @@
 declare module 'rally-point-creator' {
   interface CreatedRoute {
-    p1Id: string
-    p2Id: string
+    p1Id: number
+    p2Id: number
     routeId: string
   }
 

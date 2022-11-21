@@ -13,7 +13,7 @@ export interface GameRecord {
   id: string
   startTime: Date
   mapId: string
-  config: GameConfig
+  config: GameConfig<true>
   disputable: boolean
   disputeRequested: boolean
   disputeReviewed: boolean
@@ -95,4 +95,18 @@ export function getGameDurationString(durationMs: number): string {
     .map(v => ('' + v).padStart(2, '0'))
     .filter((v, i) => v !== '00' || i > 0)
     .join(':')
+}
+
+export type GameLoadEvent =
+  | GameLoadStartEvent
+  | GameLoadRoutesEvent
+  | GameLoadProgressEvent
+  | GameLoadCancelEvent
+
+export interface GameLoadStartEvent {
+  type: 'start'
+  gameConfig: GameConfig
+  userInfos: SbUser[]
+  resultCode: string
+  // FIXME: add routes
 }

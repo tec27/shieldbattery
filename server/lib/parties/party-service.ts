@@ -190,7 +190,7 @@ export default class PartyService implements InPartyChecker {
         throw new PartyServiceError(
           PartyServiceErrorCode.AlreadyMember,
           'This user is already a member of this party',
-          { user: invitedUser },
+          { data: { user: invitedUser } },
         )
       }
 
@@ -503,7 +503,7 @@ export default class PartyService implements InPartyChecker {
       throw new PartyServiceError(
         PartyServiceErrorCode.AlreadyInGameplayActivity,
         'One or more player is already in a gameplay activity',
-        { users: alreadyActive },
+        { data: { users: alreadyActive } },
       )
     }
 

@@ -29,7 +29,7 @@ pub struct SetupProgressInfo {
 
 #[derive(Deserialize, Clone)]
 pub struct LocalUser {
-    pub id: u32,
+    pub id: SbUserId,
     pub name: String,
 }
 
@@ -85,17 +85,17 @@ pub struct NetworkStallInfo {
 pub struct GameResults {
     #[serde(rename = "time")]
     pub time_ms: u32,
-    pub results: HashMap<u32, GamePlayerResult>,
+    pub results: HashMap<SbUserId, GamePlayerResult>,
     pub network_stalls: NetworkStallInfo,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GameResultsReport {
-    pub user_id: u32,
+    pub user_id: SbUserId,
     pub result_code: String,
     pub time: u32,
-    pub player_results: Vec<(u32, GamePlayerResult)>,
+    pub player_results: Vec<(SbUserId, GamePlayerResult)>,
 }
 
 #[derive(Serialize)]
@@ -164,17 +164,16 @@ pub struct MapForcePlayer {
     pub race: UmsLobbyRace,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq, Hash)]
 #[serde(transparent)]
-pub struct LobbyPlayerId(String);
+pub struct SbUserId(pub u32);
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayerInfo {
-    pub id: LobbyPlayerId,
     pub name: String,
     pub race: Option<String>,
-    pub user_id: Option<u32>,
+    pub user_id: Option<SbUserId>,
     /// BW player slot index. Only set in UMS; for other game types the index is equal to
     /// GameSetupInfo.slots index.
     /// And either way this value becomes useless after BW randomizes the slots during
@@ -210,7 +209,7 @@ impl PlayerInfo {
     }
 
     pub fn bw_race(&self) -> u8 {
-        match self.race.as_ref().map(|x| &**x) {
+        match self.race.as_deref() {
             Some("z") => bw::RACE_ZERG,
             Some("t") => bw::RACE_TERRAN,
             Some("p") => bw::RACE_PROTOSS,
@@ -223,7 +222,7 @@ impl PlayerInfo {
 #[serde(rename_all = "camelCase")]
 pub struct Route {
     #[serde(rename = "for")]
-    pub for_player: LobbyPlayerId,
+    pub for_player: SbUserId,
     pub server: RallyPointServer,
     pub route_id: String,
     pub player_id: u32,

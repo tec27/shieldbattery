@@ -18,7 +18,6 @@ async function setGameConfig(replay: { name: string; path: string }, user: SelfU
     type: SlotType.Human,
     typeId: 6,
     name: user.name,
-    id: cuid(),
     teamId: 0,
     userId: user.id,
   }

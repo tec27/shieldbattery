@@ -4,15 +4,13 @@ import { MapInfoJson } from './maps'
 import { BwTurnRate, BwUserLatency } from './network'
 import { RaceChar } from './races'
 import { ResolvedRallyPointServer } from './rally-point'
-import { SbUserId } from './users/sb-user'
+import { SbUser, SbUserId } from './users/sb-user'
 
 /**
  * Configuration for a particular player in a game. This is similar to Lobby's `Slot` structure,
  * but has been flattened slightly to remove the need to send info about teams.
  */
 export interface PlayerInfo {
-  /** The ID of the player slot, an opaque string. */
-  id: string
   /** The name of the player in this slot (e.g. their username). */
   name: string
   /** The race set for this slot. */
@@ -26,7 +24,7 @@ export interface PlayerInfo {
   /** The BW id of the type of this slot. */
   typeId: number
   /** Shieldbattery user ID of the player. Only set for 'human' and 'observer' */
-  userId?: number
+  userId?: SbUserId
 }
 
 export interface ReplayMapInfo {
@@ -45,10 +43,7 @@ export function isReplayMapInfo(map: MapInfoJson | ReplayMapInfo): map is Replay
 /** Configuration info for launching a local game client to play a specific game. */
 export interface GameLaunchConfig {
   /** The user currently logged into the application and playing the game. */
-  localUser: {
-    id: SbUserId
-    name: string
-  }
+  localUser: SbUser
   /** Setup configuration for the game, such as the map, game type, etc. */
   setup: {
     /**
@@ -99,12 +94,12 @@ export interface GameLaunchConfig {
 
 /** A network route configuration for communication between two players in a game. */
 export interface GameRoute {
-  /** The ID of the player who will be connected to over this network route. */
-  for: string
+  /** The user ID of the player who will be connected to over this network route. */
+  for: SbUserId
   /** The rally-point server to connect to for this route. */
   server: ResolvedRallyPointServer
   /** The ID of the route, used to identify it to the rally-point server. */
   routeId: string
   /** The ID of the local player, used to identify themselves to the rally-point server. */
-  playerId: string
+  playerId: number
 }

@@ -980,10 +980,11 @@ export class MatchmakingService {
       }
 
       teams = [
-        slots.map(s => ({
+        slots.map((s, slotNumber) => ({
           id: s.userId,
           race: s.race,
           isComputer: s.type === 'computer' || s.type === 'umsComputer',
+          slotNumber,
         })),
       ]
     } else {
@@ -994,11 +995,12 @@ export class MatchmakingService {
         ),
       )
       slots = slotsInTeams.flat()
-      teams = slotsInTeams.map(t =>
-        t.map(s => ({
+      teams = slotsInTeams.map((t, teamNumber) =>
+        t.map((s, slotNumber) => ({
           id: s.userId,
           race: s.race,
           isComputer: s.type === 'computer' || s.type === 'umsComputer',
+          slotNumber: teamNumber * TEAM_SIZES[match.type] + slotNumber,
         })),
       )
     }

@@ -122,7 +122,7 @@ export class ActiveGameManager extends TypedEventEmitter<ActiveGameManagerEvents
     }
     if (current && current.routes && isGameConfig(config)) {
       const routesIds = Set(current.routes.map(r => r.for))
-      const slotIds = Set(config.setup.slots.map(s => s.id))
+      const slotIds = Set(config.setup.slots.filter(s => s.userId !== undefined).map(s => s.userId))
 
       if (!slotIds.isSuperset(routesIds)) {
         this.setStatus(GameStatus.Error)
@@ -170,7 +170,9 @@ export class ActiveGameManager extends TypedEventEmitter<ActiveGameManagerEvents
 
     if (current && current.config) {
       const routesIds = Set(routes.map(r => r.for))
-      const slotIds = Set(current.config.setup.slots.map(s => s.id))
+      const slotIds = Set(
+        current.config.setup.slots.filter(s => s.userId !== undefined).map(s => s.userId),
+      )
 
       if (!slotIds.isSuperset(routesIds)) {
         this.setStatus(GameStatus.Error)

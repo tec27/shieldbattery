@@ -37,8 +37,8 @@ const GAME: GameRecordJson = {
     gameSubType: 0,
     teams: [
       [
-        { id: PLAYER_ID, race: 'p', isComputer: false },
-        { id: OPPONENT_ID, race: 'z', isComputer: false },
+        { id: PLAYER_ID, race: 'p', isComputer: false, slotNumber: 0 },
+        { id: OPPONENT_ID, race: 'z', isComputer: false, slotNumber: 1 },
       ],
     ],
   },

@@ -16,8 +16,8 @@ use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::app_messages::{
-    GamePlayerResult, GameResults, GameResultsReport, GameSetupInfo, LobbyPlayerId, LocalUser,
-    MapForce, NetworkStallInfo, PlayerInfo, Race, Route, Settings, SetupProgress, UmsLobbyRace,
+    GamePlayerResult, GameResults, GameResultsReport, GameSetupInfo, LocalUser, MapForce,
+    NetworkStallInfo, PlayerInfo, Race, Route, SbUserId, Settings, SetupProgress, UmsLobbyRace,
     GAME_STATUS_ERROR,
 };
 use crate::app_socket;
@@ -40,7 +40,7 @@ pub struct GameState {
     network: NetworkManager,
     network_send: mpsc::Sender<GameStateToNetworkMessage>,
     ws_send: app_socket::SendMessages,
-    internal_send: self::SendMessages,
+    internal_send: SendMessages,
     init_main_thread: std::sync::mpsc::Sender<()>,
     send_main_thread_requests: std::sync::mpsc::Sender<GameThreadRequest>,
     #[allow(dead_code)]
@@ -181,7 +181,7 @@ quick_error! {
 impl GameState {
     fn set_settings(&mut self, settings: &Settings) {
         if let InitState::WaitingForInput(ref mut state) = self.init_state {
-            crate::forge::init(&settings.local);
+            forge::init(&settings.local);
             get_bw().set_settings(settings);
             state.settings_set = true;
         } else {
@@ -416,7 +416,7 @@ impl GameState {
                 debug!("Notifying host that client is ready");
                 network_send
                     .send(GameStateToNetworkMessage::SendPayload(
-                        info.host.id.clone(),
+                        info.host.user_id.unwrap(),
                         Some(Payload::ClientReady(ClientReadyMessage::default())),
                     ))
                     .await
@@ -486,7 +486,7 @@ impl GameState {
             // Make sure (or at least try to) that quit messages get delivered to everyone and don't
             // get lost, so that quitting players don't trigger a drop screen.
             let mut deliver_final_network = Vec::new();
-            for (uid, _) in results
+            for (&uid, _) in results
                 .results
                 .iter()
                 .filter(|(_, r)| r.result == 0 /* playing */)
@@ -494,13 +494,13 @@ impl GameState {
                 if let Some(slot) = setup_info
                     .slots
                     .iter()
-                    .find(|s| uid == &s.user_id.unwrap_or(0))
+                    .find(|&s| uid == s.user_id.unwrap_or(SbUserId(0)))
                 {
                     debug!("Triggering final network sends for {}", slot.name);
                     let (send, recv) = oneshot::channel();
                     let _ = network_send
                         .send(GameStateToNetworkMessage::DeliverPayloadsInFlight(
-                            slot.id.clone(),
+                            slot.user_id.unwrap(),
                             send,
                         ))
                         .await
@@ -710,29 +710,28 @@ impl GameState {
     ) -> Pin<Box<dyn Future<Output = ()> + Send>> {
         use crate::network_manager::NetworkToGameStateMessage::*;
         match msg {
-            ReceivePayload(ref player_id, payload) => match payload {
+            ReceivePayload(sb_user_id, payload) => match payload {
                 Payload::ClientReady(_) => {
                     if let InitState::Started(ref mut state) = self.init_state {
-                        if state.unready_players.remove(player_id) {
-                            debug!("{:?} is now ready", player_id)
+                        if state.unready_players.remove(&sb_user_id) {
+                            debug!("{:?} is now ready", sb_user_id)
                         }
 
                         state.check_unready_players();
                     } else {
                         error!(
                             "Got ClientReady for {:?} before init had started",
-                            player_id
+                            sb_user_id
                         );
                     }
                 }
                 Payload::ClientAckRequest(_) => {
                     // Trigger a response to this packet immediately to deliver any acks.
                     let network_send = self.network_send.clone();
-                    let player_id = player_id.clone();
                     tokio::spawn(async move {
                         let _ = network_send
                             .send(GameStateToNetworkMessage::SendPayload(
-                                player_id,
+                                sb_user_id,
                                 Some(Payload::ClientAckResponse(
                                     ClientAckResponseMessage::default(),
                                 )),
@@ -821,7 +820,7 @@ struct InitInProgress {
     setup_info: Arc<GameSetupInfo>,
     local_user: Arc<LocalUser>,
     joined_players: Vec<JoinedPlayer>,
-    unready_players: HashSet<LobbyPlayerId>,
+    unready_players: HashSet<SbUserId>,
     waiting_for_result: Vec<oneshot::Sender<Arc<GameResults>>>,
     stall_durations: Vec<Duration>,
     stall_count: usize,
@@ -834,7 +833,7 @@ struct JoinedPlayer {
     name: String,
     storm_id: StormPlayerId,
     player_id: Option<u8>,
-    sb_user_id: u32,
+    sb_user_id: SbUserId,
 }
 
 impl InitInProgress {
@@ -849,7 +848,7 @@ impl InitInProgress {
                     if !slot.is_human() || slot.name == local_user.name {
                         None
                     } else {
-                        Some(slot.id.clone())
+                        Some(slot.user_id.unwrap())
                     }
                 })
                 .collect::<HashSet<_>>()

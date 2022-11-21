@@ -414,7 +414,7 @@ const eventToAction: EventToActionMap = {
         teamId: lobby.info.teams.get(teamIndex).teamId,
       }))
       .toArray()
-    const hostInfo = playerInfos.find(s => s.id === host.id)!
+    const hostInfo = playerInfos.find(s => s.userId === host.userId)!
 
     const config: GameLaunchConfig = {
       localUser: { id: user.id, name: user.name },

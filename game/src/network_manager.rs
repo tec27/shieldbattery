@@ -13,7 +13,7 @@ use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::app_messages;
-use crate::app_messages::{LobbyPlayerId, Route as RouteInput};
+use crate::app_messages::{Route as RouteInput, SbUserId};
 use crate::cancel_token::{CancelToken, Canceler};
 use crate::netcode::ack_manager::AckManager;
 use crate::netcode::storm::{get_resend_info, get_storm_id, ResendType};
@@ -40,15 +40,15 @@ pub enum NetworkManagerMessage {
 }
 
 pub enum GameStateToNetworkMessage {
-    SendPayload(LobbyPlayerId, Option<Payload>),
+    SendPayload(SbUserId, Option<Payload>),
     /// Run packets through the queue for a short duration to try and get acks for all the payloads
     /// in flight. This should be used at the completion of a game to ensure any final payloads get
     /// delivered.
-    DeliverPayloadsInFlight(LobbyPlayerId, oneshot::Sender<Result<()>>),
+    DeliverPayloadsInFlight(SbUserId, oneshot::Sender<Result<()>>),
 }
 
 pub enum NetworkToGameStateMessage {
-    ReceivePayload(LobbyPlayerId, Payload),
+    ReceivePayload(SbUserId, Payload),
 }
 
 quick_error! {
@@ -76,8 +76,7 @@ pub struct Route {
     route_id: RouteId,
     player_id: PlayerId,
     address: SocketAddr,
-    // Links routes to PlayerInfo
-    lobby_player_id: LobbyPlayerId,
+    target_user_id: SbUserId,
 }
 
 enum NetworkState {
@@ -94,7 +93,7 @@ struct RouteState {
 
 struct ReadyNetwork {
     ip_to_routes: HashMap<Ipv4Addr, RouteState>,
-    lobby_id_to_routes: HashMap<LobbyPlayerId, RouteState>,
+    user_id_to_routes: HashMap<SbUserId, RouteState>,
 }
 
 #[derive(Default)]
@@ -104,7 +103,7 @@ struct IncompleteNetwork {
     routes: Option<Vec<Arc<Route>>>,
     game_info: Option<Arc<app_messages::GameSetupInfo>>,
     // This existing means that storm side is active
-    snp_send_messages: Option<snp::SendMessages>,
+    snp_send_messages: Option<SendMessages>,
 }
 
 struct State {
@@ -225,7 +224,7 @@ impl State {
                     let route = Arc::new(Route {
                         route_id,
                         player_id,
-                        lobby_player_id: route1.for_player.clone(),
+                        target_user_id: route1.for_player,
                         address: server.address,
                     });
                     rally_point
@@ -517,7 +516,7 @@ impl State {
                                     }
                                     Some(payload) => {
                                         let message = NetworkToGameStateMessage::ReceivePayload(
-                                            route_state.route.lobby_player_id.clone(),
+                                            route_state.route.target_user_id,
                                             payload,
                                         );
 
@@ -554,7 +553,7 @@ impl State {
             NetworkManagerMessage::GameState(message) => match message {
                 GameStateToNetworkMessage::SendPayload(target, payload) => {
                     if let NetworkState::Ready(ref network) = self.network {
-                        if let Some(route_state) = network.lobby_id_to_routes.get(&target) {
+                        if let Some(route_state) = network.user_id_to_routes.get(&target) {
                             let game_message = {
                                 let mut ack_manager = route_state.ack_manager.lock();
                                 ack_manager.build_outgoing(payload)
@@ -588,7 +587,7 @@ impl State {
                 }
                 GameStateToNetworkMessage::DeliverPayloadsInFlight(target, on_complete) => {
                     if let NetworkState::Ready(ref network) = self.network {
-                        if let Some(route_state) = network.lobby_id_to_routes.get(&target) {
+                        if let Some(route_state) = network.user_id_to_routes.get(&target) {
                             let (cancel_token, canceler) = CancelToken::new();
                             self.cancel_child_tasks.push(canceler);
                             let rally_point = self.rally_point.clone();
@@ -679,23 +678,26 @@ impl State {
         // - Keeping consistent IPs/ports between all players of the game
         //   (even though they might differ due to NAT, LAN, etc.)
         // - Allowing us to easily get references to active rally-point routes
-        let host = game_info.slots.iter().find(|x| x.id == game_info.host.id);
+        let host = game_info
+            .slots
+            .iter()
+            .find(|x| x.user_id == game_info.host.user_id);
         let rest = game_info
             .slots
             .iter()
             .filter(|x| x.is_human() || x.is_observer())
-            .filter(|x| x.id != game_info.host.id);
-        let lobby_id_to_routes = host
+            .filter(|x| x.user_id != game_info.host.user_id);
+        let user_id_to_routes = host
             .into_iter()
             .chain(rest.clone())
             .enumerate()
             .filter_map(|(_, player)| {
                 routes
                     .iter()
-                    .find(|x| x.lobby_player_id == player.id)
+                    .find(|x| x.target_user_id == player.user_id.unwrap())
                     .map(|route| {
                         (
-                            player.id.clone(),
+                            player.user_id.unwrap(),
                             RouteState {
                                 route: route.clone(),
                                 ack_manager: Arc::new(Mutex::new(AckManager::new())),
@@ -711,12 +713,12 @@ impl State {
             .filter_map(|(i, player)| {
                 routes
                     .iter()
-                    .find(|x| x.lobby_player_id == player.id)
+                    .find(|x| x.target_user_id == player.user_id.unwrap())
                     .map(|route| {
                         (
                             Ipv4Addr::new(10, 27, 27, i as u8),
-                            lobby_id_to_routes
-                                .get(&route.lobby_player_id)
+                            user_id_to_routes
+                                .get(&route.target_user_id)
                                 .unwrap()
                                 .clone(),
                         )
@@ -772,7 +774,7 @@ impl State {
 
         let ready = ReadyNetwork {
             ip_to_routes,
-            lobby_id_to_routes,
+            user_id_to_routes,
         };
         self.network = NetworkState::Ready(ready);
         for waiting in self.waiting_for_network.drain(..) {
@@ -869,8 +871,8 @@ impl NetworkManager {
                 .send(NetworkManagerMessage::WaitNetworkReady(send))
                 .await
                 .map_err(|_| NetworkError::NotActive)?;
-            let result = recv.await.map_err(|_| NetworkError::NotActive)?;
-            result
+
+            recv.await.map_err(|_| NetworkError::NotActive)?
         }
     }
 

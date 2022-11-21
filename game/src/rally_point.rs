@@ -165,7 +165,7 @@ impl State {
                         };
                         tokio::spawn(forward_error);
                         let to_send = (message.clone(), address, Some(send_this_error));
-                        if let Err(_) = send_bytes.send(to_send).await {
+                        if (send_bytes.send(to_send).await).is_err() {
                             break;
                         }
                     }
@@ -634,7 +634,7 @@ impl RallyPoint {
         address: &SocketAddr,
     ) -> impl Future<Output = Result<(), RallyPointError>> {
         let (send, recv) = oneshot::channel();
-        let address = to_ipv6_addr(&address);
+        let address = to_ipv6_addr(address);
         let request = ExternalRequest::WaitRouteReady(*route, address, send);
         let sender = self.send_requests.clone();
         async move {
@@ -652,7 +652,7 @@ impl RallyPoint {
         player_id: PlayerId,
         address: &SocketAddr,
     ) -> impl Future<Output = Result<(), RallyPointError>> {
-        let address = to_ipv6_addr(&address);
+        let address = to_ipv6_addr(address);
         let request = ExternalRequest::KeepAlive(*route, player_id, address);
         let sender = self.send_requests.clone();
         async move {
@@ -669,7 +669,7 @@ impl RallyPoint {
         route: &RouteId,
         address: &SocketAddr,
     ) -> impl Stream<Item = Result<Bytes, RallyPointError>> {
-        let address = to_ipv6_addr(&address);
+        let address = to_ipv6_addr(address);
         let (send, recv) = mpsc::channel(32);
         let request = ExternalRequest::ListenData(*route, address, send);
         let sender = self.send_requests.clone();
@@ -692,7 +692,7 @@ impl RallyPoint {
         data: Bytes,
         address: &SocketAddr,
     ) -> impl Future<Output = Result<(), RallyPointError>> {
-        let address = to_ipv6_addr(&address);
+        let address = to_ipv6_addr(address);
         let request = ExternalRequest::Forward(*route, player, data, address);
         let sender = self.send_requests.clone();
         async move {
@@ -706,11 +706,11 @@ impl RallyPoint {
 }
 
 fn route_key(address: &SocketAddrV6, route_id: &RouteId) -> RouteKey {
-    RouteKey(address.clone(), route_id.clone())
+    RouteKey(*address, *route_id)
 }
 
 fn decode_message(bytes: &Bytes) -> Option<ServerMessage> {
-    let mut read: &[u8] = &bytes;
+    let mut read: &[u8] = bytes;
     let message = match read.read_u8().ok()? {
         MSG_JOIN_ROUTE_SUCCESS => {
             let route = RouteId(read.read_u64::<LE>().ok()?);
