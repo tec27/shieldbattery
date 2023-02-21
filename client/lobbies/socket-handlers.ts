@@ -1,6 +1,7 @@
 import { NydusClient, RouteHandler } from 'nydus-client'
 import { BasicChannelInfo } from '../../common/chat'
-import { GameLaunchConfig, GameRoute, PlayerInfo } from '../../common/game-launch-config'
+import { GameLaunchConfig, PlayerInfo } from '../../common/game-launch-config'
+import { GameRoute } from '../../common/games/games'
 import { TypedIpcRenderer } from '../../common/ipc'
 import { getIngameLobbySlotsWithIndexes } from '../../common/lobbies'
 import { MapExtension, MapInfoJson } from '../../common/maps'

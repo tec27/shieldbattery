@@ -5,6 +5,7 @@ import { Jsonify } from '../json'
 import { ClientLeagueUserChangeJson, LeagueJson } from '../leagues'
 import { MapInfoJson } from '../maps'
 import { matchmakingTypeToLabel, PublicMatchmakingRatingChangeJson } from '../matchmaking'
+import { ResolvedRallyPointServer } from '../rally-point'
 import { SbUser, SbUserId } from '../users/sb-user'
 import { GameConfig, GameSource } from './configuration'
 import { ReconciledPlayerResult } from './results'
@@ -97,16 +98,78 @@ export function getGameDurationString(durationMs: number): string {
     .join(':')
 }
 
+/** A network route configuration for communication between two players in a game. */
+export interface GameRoute {
+  /** The user ID of the player who will be connected to over this network route. */
+  for: SbUserId
+  /** The rally-point server to connect to for this route. */
+  server: ResolvedRallyPointServer
+  /** The ID of the route, used to identify it to the rally-point server. */
+  routeId: string
+  /** The ID of the local player, used to identify themselves to the rally-point server. */
+  playerId: number
+}
+
 export type GameLoadEvent =
-  | GameLoadStartEvent
+  | GameLoadBeginEvent
   | GameLoadRoutesEvent
   | GameLoadProgressEvent
   | GameLoadCancelEvent
+  | GameLoadCountdownEvent
+  | GameLoadCompleteEvent
 
-export interface GameLoadStartEvent {
-  type: 'start'
+/**
+ * Websocket event signaling a new game is loading (or a new client has connected to the server when
+ * a game load was in progress).
+ */
+export interface GameLoadBeginEvent {
+  type: 'begin'
+  id: string
   gameConfig: GameConfig
   userInfos: SbUser[]
   resultCode: string
-  // FIXME: add routes
+  routes?: GameRoute[]
+}
+
+/**
+ * Websocket event signaling that rally-point routes have been assigned for a game.
+ */
+export interface GameLoadRoutesEvent {
+  type: 'routes'
+  id: string
+  routes: GameRoute[]
+}
+
+// TODO(tec27): Is this actually useful?
+/** Websocket event signaling that one or more users' load progress has changed. */
+export interface GameLoadProgressEvent {
+  type: 'progress'
+  id: string
+  completed: SbUserId[]
+}
+
+/**
+ * Websocket event signaling that a particular loading game was canceled and any associated
+ * resources should be cleaned up (e.g. the game process should be closed).
+ */
+export interface GameLoadCancelEvent {
+  type: 'cancel'
+  id: string
+}
+
+/**
+ * Websocket event signaling that a loading game is about to start, and clients should show a
+ * countdown.
+ */
+export interface GameLoadCountdownEvent {
+  type: 'countdown'
+  id: string
+}
+
+/**
+ * Websocket event signaling that a game has fully loaded (and can be shown to the user).
+ */
+export interface GameLoadCompleteEvent {
+  type: 'complete'
+  id: string
 }

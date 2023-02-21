@@ -33,3 +33,41 @@ export async function raceAbort<T>(signal: AbortSignal, promise: Promise<T>): Pr
     }),
   ]).finally(() => signal.removeEventListener('abort', onAbort))
 }
+
+/**
+ * Combines 2 or more `AbortSignal`s into a single one, such that any of them being aborted will
+ * abort the combined signal.
+ *
+ * The signal will be aborted with the `reason` of the first signal to abort.
+ */
+export function combinedAbortSignal(signals: Iterable<AbortSignal>): AbortSignal {
+  // Before we do any work, check if any of the signals are already aborted
+  for (const signal of signals) {
+    if (signal.aborted) {
+      // NOTE(tec27): TS types don't seem to have `AbortSignal.abort()` yet, can be simplified once
+      // they do
+      const controller = new AbortController()
+      controller.abort(signal.reason)
+      return controller.signal
+    }
+  }
+
+  const controller = new AbortController()
+  const localSignals = new Map(
+    Array.from(signals, s => [
+      s,
+      () => {
+        controller.abort(s.reason)
+        for (const [signal, listener] of localSignals) {
+          signal.removeEventListener('abort', listener)
+        }
+      },
+    ]),
+  )
+
+  for (const [signal, listener] of localSignals.entries()) {
+    signal.addEventListener('abort', listener)
+  }
+
+  return controller.signal
+}

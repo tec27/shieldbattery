@@ -1,6 +1,7 @@
 import { Map, Set } from 'immutable'
 import { NydusClient, NydusServer } from 'nydus'
 import { container, inject, singleton } from 'tsyringe'
+import { ReadonlyDeep } from 'type-fest'
 import { EventMap, TypedEventEmitter } from '../../../common/typed-emitter'
 import { SbUserId } from '../../../common/users/sb-user'
 import log from '../logging/logger'
@@ -8,7 +9,10 @@ import { UpsertUserIp } from '../network/user-ips-type'
 import getAddress from './get-address'
 import { RequestSessionLookup, SessionInfo } from './session-lookup'
 
-export type DataGetter<T, D> = (socketGroup: T, socket: NydusClient) => D | Promise<D | undefined>
+export type DataGetter<T, D> = (
+  socketGroup: T,
+  socket: NydusClient,
+) => D | ReadonlyDeep<D> | Promise<D | undefined>
 export type CleanupFunc<T> = (socketGroup: T) => void
 
 interface SubscriptionInfo<T> {
