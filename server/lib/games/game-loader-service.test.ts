@@ -1,4 +1,5 @@
 import { NydusServer } from 'nydus'
+import promClient from 'prom-client'
 import RallyPointCreator, { CreatedRoute } from 'rally-point-creator'
 import { GameConfig, GameSource, GameType } from '../../../common/games/configuration'
 import {
@@ -20,7 +21,7 @@ import {
   NydusConnector,
 } from '../websockets/testing/websockets'
 import { TypedPublisher } from '../websockets/typed-publisher'
-import { COUNTDOWN_TIME_MS, GameLoaderService } from './game-loader-service'
+import { COUNTDOWN_TIME_MS, GameLoaderService, GAME_LAUNCH_TIMEOUT_MS } from './game-loader-service'
 import { GameplayActivityRegistry } from './gameplay-activity-registry'
 import { registerGame } from './registration'
 
@@ -152,6 +153,8 @@ describe('games/game-loader-service', () => {
       return { gameId: `game-${curGameId++}`, resultCodes }
     })
 
+    promClient.register.clear()
+
     nydus = createFakeNydusServer()
     const sessionLookup = new RequestSessionLookup()
     clientSocketsManager = new ClientSocketsManager(nydus, sessionLookup)
@@ -185,7 +188,7 @@ describe('games/game-loader-service', () => {
     clock.autoRunTimeouts = false
   })
 
-  test('1 human vs AI', async () => {
+  test('1 human vs AI - success', async () => {
     registerActive(1, client1)
     const gameConfig: GameConfig = {
       gameSource: GameSource.Lobby,
@@ -243,5 +246,56 @@ describe('games/game-loader-service', () => {
     })
 
     await expect(gameLoadPromise).resolves.toBeUndefined()
+  })
+
+  test('1 human vs AI - timeout', async () => {
+    registerActive(1, client1)
+    const gameConfig: GameConfig = {
+      gameSource: GameSource.Lobby,
+      gameType: GameType.Melee,
+      gameSubType: 0,
+      teams: [
+        [
+          { id: makeSbUserId(1), race: 'p', isComputer: false, slotNumber: 0 },
+          { id: makeSbUserId(-1), race: 'z', isComputer: true, slotNumber: 1 },
+        ],
+      ],
+    }
+
+    const gameLoadPromise = gameLoaderService.loadGame({
+      mapId: MAP_ID,
+      gameConfig,
+    })
+    await new Promise(resolve => setTimeout(resolve, 25))
+
+    expect(client1.publish).toHaveBeenCalledWith(
+      GameLoaderService.getLoaderPlayerPath('game-0', makeSbUserId(1)),
+      {
+        type: 'begin',
+        id: 'game-0',
+        gameConfig,
+        mapInfo: expect.anything(),
+        userInfos: [USER_1],
+        resultCode: expect.any(String),
+        routes: undefined,
+      } satisfies GameLoadBeginEvent,
+    )
+    asMockedFunction(client1.publish).mockClear()
+
+    await Promise.all([
+      clock.runTimeoutsUntil({
+        criteria: StopCriteria.TimeReached,
+        timeMillis: clock.now() + GAME_LAUNCH_TIMEOUT_MS,
+      }),
+
+      expect(gameLoadPromise).rejects.toThrowErrorMatchingInlineSnapshot(
+        `"one or more players failed to launch in time"`,
+      ),
+    ])
+
+    expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
+      type: 'cancel',
+      id: 'game-0',
+    })
   })
 })

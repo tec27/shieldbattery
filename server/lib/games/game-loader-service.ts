@@ -21,7 +21,12 @@ import { registerGame } from './registration'
 import { getTurnRateForRoutes } from './turn-rate'
 
 /** How long to wait for clients to report a ping to rally-point. */
-const PING_REPORT_TIMEOUT = 10000
+export const PING_REPORT_TIMEOUT_MS = 10000
+
+/**
+ * How long to wait for a client's game to launch (e.g. to be ready to send/accept connections).
+ */
+export const GAME_LAUNCH_TIMEOUT_MS = 120000
 
 /** How long the pre-game countdown lasts for. */
 export const COUNTDOWN_TIME_MS = 5000
@@ -29,12 +34,16 @@ export const COUNTDOWN_TIME_MS = 5000
 export enum GameLoadErrorType {
   GameNotFound = 'gameNotFound',
   PlayerFailed = 'playerFailed',
+  LaunchTimeout = 'launchTimeout',
 }
 
 interface GameLoadErrorTypeToData {
   [GameLoadErrorType.GameNotFound]: undefined
   [GameLoadErrorType.PlayerFailed]: {
     userId: SbUserId
+  }
+  [GameLoadErrorType.LaunchTimeout]: {
+    userIds: SbUserId[]
   }
 }
 
@@ -94,7 +103,7 @@ class LoadInProgress {
   registerPlayerFailed(userId: SbUserId) {
     this.loadingState.set(userId, false)
     this.abort(
-      new GameLoaderError(GameLoadErrorType.PlayerFailed, 'Player failed', {
+      new GameLoaderError(GameLoadErrorType.PlayerFailed, 'player failed to load', {
         data: { userId },
       }),
     )
@@ -217,17 +226,16 @@ export class GameLoaderService {
                 this.rallyPointService.waitForPingResult(
                   this.gameplayActivityRegistry.getClientForUser(p)!,
                 ),
-                new Promise(resolve => this.clock.setTimeout(resolve, PING_REPORT_TIMEOUT)).then(
-                  () =>
-                    loadInProgress.abort(
-                      new GameLoaderError(
-                        GameLoadErrorType.PlayerFailed,
-                        'player did not report pings',
-                        {
-                          data: { userId: p },
-                        },
-                      ),
-                    ),
+                new Promise(resolve => this.clock.setTimeout(resolve, PING_REPORT_TIMEOUT_MS)).then(
+                  () => {
+                    throw new GameLoaderError(
+                      GameLoadErrorType.PlayerFailed,
+                      'player did not report pings',
+                      {
+                        data: { userId: p },
+                      },
+                    )
+                  },
                 ),
               ]),
             ),
@@ -266,9 +274,25 @@ export class GameLoaderService {
         })
       }
 
+      const launchTimeoutPromise = new Promise(resolve =>
+        this.clock.setTimeout(resolve, GAME_LAUNCH_TIMEOUT_MS),
+      ).then(() => {
+        throw new GameLoaderError(
+          GameLoadErrorType.LaunchTimeout,
+          'one or more players failed to launch in time',
+          {
+            data: {
+              userIds: Array.from(loadInProgress.getLoadingState().entries())
+                .filter(([_id, isLoaded]) => !isLoaded)
+                .map(([id, _]) => id),
+            },
+          },
+        )
+      })
+
       let allPlayersLoaded = false
       do {
-        await loadInProgress.untilLoadedStateChanged()
+        await Promise.race([loadInProgress.untilLoadedStateChanged(), launchTimeoutPromise])
         const loadedPlayers = Array.from(loadInProgress.getLoadingState().entries())
           .filter(([_, isLoaded]) => isLoaded)
           .map(([id, _]) => id)
@@ -297,6 +321,11 @@ export class GameLoaderService {
       this.gameLoadSuccessesTotalMetric.labels(gameConfig.gameSource).inc()
     } catch (err: unknown) {
       this.gameLoadFailuresTotalMetric.labels(gameConfig.gameSource).inc()
+
+      this.typedPublisher.publish(GameLoaderService.getLoaderPath(gameId), {
+        type: 'cancel',
+        id: gameId,
+      })
 
       // TODO(tec27): Instead of deleting, just mark the game as having failed to load
       Promise.all([deleteRecordForGame(gameId), deleteUserRecordsForGame(gameId)]).catch(err => {
