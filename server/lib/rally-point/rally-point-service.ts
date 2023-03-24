@@ -1,5 +1,6 @@
 import childProcess from 'child_process'
-import { LookupAddress, promises as dns } from 'dns'
+import type { LookupAddress } from 'dns'
+import dns from 'node:dns/promises'
 import { NydusServer } from 'nydus'
 import path from 'path'
 import RallyPointCreator, { CreatedRoute } from 'rally-point-creator'

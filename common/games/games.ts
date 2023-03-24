@@ -5,6 +5,7 @@ import { Jsonify } from '../json'
 import { ClientLeagueUserChangeJson, LeagueJson } from '../leagues'
 import { MapInfoJson } from '../maps'
 import { matchmakingTypeToLabel, PublicMatchmakingRatingChangeJson } from '../matchmaking'
+import { BwTurnRate, BwUserLatency } from '../network'
 import { ResolvedRallyPointServer } from '../rally-point'
 import { SbUser, SbUserId } from '../users/sb-user'
 import { GameConfig, GameSource } from './configuration'
@@ -126,6 +127,7 @@ export interface GameLoadBeginEvent {
   type: 'begin'
   id: string
   gameConfig: GameConfig
+  mapInfo: MapInfoJson
   userInfos: SbUser[]
   resultCode: string
   routes?: GameRoute[]
@@ -138,6 +140,8 @@ export interface GameLoadRoutesEvent {
   type: 'routes'
   id: string
   routes: GameRoute[]
+  turnRate?: BwTurnRate
+  userLatency?: BwUserLatency
 }
 
 // TODO(tec27): Is this actually useful?

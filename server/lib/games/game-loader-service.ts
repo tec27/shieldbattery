@@ -2,23 +2,29 @@ import { Counter, Histogram, linearBuckets } from 'prom-client'
 import { singleton } from 'tsyringe'
 import { isAbortError, raceAbort } from '../../../common/async/abort-signals'
 import createDeferred, { Deferred } from '../../../common/async/deferred'
-import { timeoutPromise } from '../../../common/async/timeout-promise'
 import { appendToMultimap } from '../../../common/data-structures/maps'
 import { GameConfig } from '../../../common/games/configuration'
 import { GameLoadBeginEvent, GameLoadEvent, GameRoute } from '../../../common/games/games'
+import { toMapInfoJson } from '../../../common/maps'
 import { SbUserId } from '../../../common/users/sb-user'
 import { CodedError } from '../errors/coded-error'
 import log from '../logging/logger'
+import { getMapInfo } from '../maps/map-models'
 import { deleteUserRecordsForGame } from '../models/games-users'
 import { RallyPointRouteInfo, RallyPointService } from '../rally-point/rally-point-service'
+import { Clock } from '../time/clock'
 import { findUsersById } from '../users/user-model'
 import { TypedPublisher } from '../websockets/typed-publisher'
 import { deleteRecordForGame } from './game-models'
 import { GameplayActivityRegistry } from './gameplay-activity-registry'
 import { registerGame } from './registration'
+import { getTurnRateForRoutes } from './turn-rate'
 
 /** How long to wait for clients to report a ping to rally-point. */
 const PING_REPORT_TIMEOUT = 10000
+
+/** How long the pre-game countdown lasts for. */
+export const COUNTDOWN_TIME_MS = 5000
 
 export enum GameLoadErrorType {
   GameNotFound = 'gameNotFound',
@@ -51,7 +57,6 @@ class LoadInProgress {
   readonly playerIds: ReadonlySet<SbUserId>
   private abortController = new AbortController()
   private loadingPromises = new Map<SbUserId, Deferred<void>>()
-  // FIXME: State should maybe be more granular?
   private loadingState = new Map<SbUserId, boolean>()
 
   constructor(readonly gameId: string, readonly playerIdArray: ReadonlyArray<SbUserId>) {
@@ -84,6 +89,15 @@ class LoadInProgress {
   registerPlayerLoaded(userId: SbUserId) {
     this.loadingState.set(userId, true)
     this.loadingPromises.get(userId)!.resolve()
+  }
+
+  registerPlayerFailed(userId: SbUserId) {
+    this.loadingState.set(userId, false)
+    this.abort(
+      new GameLoaderError(GameLoadErrorType.PlayerFailed, 'Player failed', {
+        data: { userId },
+      }),
+    )
   }
 }
 
@@ -118,6 +132,7 @@ export class GameLoaderService {
     private gameplayActivityRegistry: GameplayActivityRegistry,
     private typedPublisher: TypedPublisher<GameLoadEvent>,
     private rallyPointService: RallyPointService,
+    private clock: Clock,
   ) {}
 
   async loadGame({ mapId, gameConfig }: { mapId: string; gameConfig: GameConfig }): Promise<void> {
@@ -126,7 +141,11 @@ export class GameLoaderService {
     if (!playerIds.length) {
       throw new Error('no humans found in game configuration')
     }
-    const userInfos = await findUsersById(playerIds)
+    const [userInfos, mapInfo] = await Promise.all([findUsersById(playerIds), getMapInfo([mapId])])
+    if (!mapInfo.length) {
+      throw new Error('could not find map info')
+    }
+    const mapInfoJson = toMapInfoJson(mapInfo[0])
     if (userInfos.length !== playerIds.length) {
       throw new Error('could not find all users in game')
     }
@@ -138,7 +157,11 @@ export class GameLoaderService {
       throw new Error('not all players have an active client')
     }
 
-    const { gameId, resultCodes } = await registerGame(mapId, gameConfig)
+    const { gameId, resultCodes } = await registerGame(
+      mapId,
+      gameConfig,
+      new Date(this.clock.now()),
+    )
     const gamePath = GameLoaderService.getLoaderPath(gameId)
 
     const loadInProgress = new LoadInProgress(gameId, playerIds)
@@ -149,6 +172,8 @@ export class GameLoaderService {
     try {
       // Subscribe all the players to the relevant websocket routes on their active client
       for (const playerId of playerIds) {
+        loadInProgress.throwIfAborted()
+
         const resultCode = resultCodes.get(playerId)
         if (!resultCode) {
           throw new Error('could not find result code for player')
@@ -169,6 +194,7 @@ export class GameLoaderService {
               type: 'begin',
               id: gameId,
               gameConfig,
+              mapInfo: mapInfoJson,
               userInfos,
               resultCode,
               routes: routesByPlayer.get(playerId),
@@ -191,16 +217,17 @@ export class GameLoaderService {
                 this.rallyPointService.waitForPingResult(
                   this.gameplayActivityRegistry.getClientForUser(p)!,
                 ),
-                timeoutPromise(PING_REPORT_TIMEOUT)[0].then(() =>
-                  loadInProgress.abort(
-                    new GameLoaderError(
-                      GameLoadErrorType.PlayerFailed,
-                      'player did not report pings',
-                      {
-                        data: { userId: p },
-                      },
+                new Promise(resolve => this.clock.setTimeout(resolve, PING_REPORT_TIMEOUT)).then(
+                  () =>
+                    loadInProgress.abort(
+                      new GameLoaderError(
+                        GameLoadErrorType.PlayerFailed,
+                        'player did not report pings',
+                        {
+                          data: { userId: p },
+                        },
+                      ),
                     ),
-                  ),
                 ),
               ]),
             ),
@@ -213,6 +240,11 @@ export class GameLoaderService {
       // Create the rally-point routes for each player pair in the game
       const routes = hasMultipleHumans ? await this.createRoutes(playerIds) : []
       loadInProgress.throwIfAborted()
+
+      const { turnRate, userLatency, maxEstimatedLatency } = getTurnRateForRoutes(routes)
+      this.maxEstimatedLatencyMetric
+        .labels(gameConfig.gameSource)
+        .observe(maxEstimatedLatency / 1000)
 
       // Let each player know what their routes are
       for (const {
@@ -229,6 +261,8 @@ export class GameLoaderService {
           type: 'routes',
           id: gameId,
           routes,
+          turnRate,
+          userLatency,
         })
       }
 
@@ -239,18 +273,32 @@ export class GameLoaderService {
           .filter(([_, isLoaded]) => isLoaded)
           .map(([id, _]) => id)
 
-        // FIXME: broadcast update
+        this.typedPublisher.publish(GameLoaderService.getLoaderPath(gameId), {
+          type: 'progress',
+          id: gameId,
+          completed: loadedPlayers,
+        })
 
         allPlayersLoaded = loadedPlayers.length === playerIds.length
       } while (!allPlayersLoaded)
 
-      // FIXME: broadcast countdown
-      // FIXME: start game
-      // FIXME: increment success metric
+      loadInProgress.throwIfAborted()
+      this.typedPublisher.publish(GameLoaderService.getLoaderPath(gameId), {
+        type: 'countdown',
+        id: gameId,
+      })
+      await new Promise(resolve => this.clock.setTimeout(resolve, COUNTDOWN_TIME_MS))
+
+      loadInProgress.throwIfAborted()
+      this.typedPublisher.publish(GameLoaderService.getLoaderPath(gameId), {
+        type: 'complete',
+        id: gameId,
+      })
+      this.gameLoadSuccessesTotalMetric.labels(gameConfig.gameSource).inc()
     } catch (err: unknown) {
       this.gameLoadFailuresTotalMetric.labels(gameConfig.gameSource).inc()
-      this.loadsInProgress.delete(gameId)
 
+      // TODO(tec27): Instead of deleting, just mark the game as having failed to load
       Promise.all([deleteRecordForGame(gameId), deleteUserRecordsForGame(gameId)]).catch(err => {
         log.error({ err }, 'error removing game records for canceled game')
       })
@@ -266,6 +314,7 @@ export class GameLoaderService {
 
       throw err
     } finally {
+      this.loadsInProgress.delete(gameId)
       for (const fn of subscriptionCleanupFuncs) {
         fn()
       }
@@ -279,6 +328,15 @@ export class GameLoaderService {
     }
 
     loadInProgress.registerPlayerLoaded(userId)
+  }
+
+  registerPlayerFailed(gameId: string, userId: SbUserId) {
+    const loadInProgress = this.loadsInProgress.get(gameId)
+    if (!loadInProgress || !loadInProgress.playerIds.has(userId)) {
+      throw new GameLoaderError(GameLoadErrorType.GameNotFound, 'game not found')
+    }
+
+    loadInProgress.registerPlayerFailed(userId)
   }
 
   private async createRoutes(players: ReadonlyArray<SbUserId>): Promise<RallyPointRouteInfo[]> {

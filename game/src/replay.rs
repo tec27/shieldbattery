@@ -16,11 +16,12 @@ static REPLAY_MAGIC: &[u8] = &[
 ];
 
 pub const SECTION_ID: u32 = 0x74616253; // Sbat
-                                        // Change added by each version
-                                        // 1: Replay uses order queue limit fixes
-                                        // 2: Replay has UMS user selectable slots saved correctly
-                                        //      Was broken in SB replays before that; we don't currently do anything that
-                                        //      would need to know this, but going to make it easy to tell if we do in future.
+
+// Change added by each version
+// 1: Replay uses order queue limit fixes
+// 2: Replay has UMS user selectable slots saved correctly
+//      Was broken in SB replays before that; we don't currently do anything that
+//      would need to know this, but going to make it easy to tell if we do in future.
 pub const GAME_LOGIC_VERSION: u16 = 0x2;
 
 pub struct SbatReplayData {

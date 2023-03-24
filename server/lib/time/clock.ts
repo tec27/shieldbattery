@@ -32,7 +32,7 @@ export class Clock {
    *
    * @see window.setTimeout
    */
-  setTimeout(fn: () => void, timeoutMillis: number): TimeoutId {
+  setTimeout(fn: (args: void) => void, timeoutMillis: number): TimeoutId {
     return setTimeout(fn, timeoutMillis)
   }
 }

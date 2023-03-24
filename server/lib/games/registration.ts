@@ -1,8 +1,32 @@
+import { randomBytes } from 'node:crypto'
 import { GameConfig } from '../../../common/games/configuration'
 import transact from '../db/transaction'
 import { createGameUserRecord } from '../models/games-users'
 import { createGameRecord } from './game-models'
-import { genResultCode } from './gen-result-code'
+
+const RESULT_CODE_BYTES = 12
+
+function genResultCodes(amount: number): Promise<string[]> {
+  if (amount <= 0) {
+    throw new Error('Invalid result code amount: ' + amount)
+  }
+
+  return new Promise((resolve, reject) => {
+    randomBytes(RESULT_CODE_BYTES * amount, (err, buf) => {
+      if (err) {
+        reject(err)
+      } else {
+        const resultCodes = []
+        for (let i = 0; i < amount; i++) {
+          resultCodes.push(
+            buf.toString('base64', i * RESULT_CODE_BYTES, (i + 1) * RESULT_CODE_BYTES),
+          )
+        }
+        resolve(resultCodes)
+      }
+    })
+  })
+}
 
 /**
  * Registers a game in the database so that results can be collected for it.
@@ -24,7 +48,8 @@ export async function registerGame(mapId: string, gameConfig: GameConfig, startT
     return r
   }, [])
 
-  const resultCodes = new Map(humanPlayers.map(p => [p.id, genResultCode()]))
+  const resultCodesArray = await genResultCodes(humanPlayers.length)
+  const resultCodes = new Map(humanPlayers.map((p, i) => [p.id, resultCodesArray[i]]))
 
   // NOTE(tec27): the value here makes the linter happy, but this will actually be set in the
   // transaction below
