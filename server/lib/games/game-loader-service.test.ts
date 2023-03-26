@@ -10,6 +10,7 @@ import {
 import { RallyPointServer } from '../../../common/rally-point'
 import { asMockedFunction } from '../../../common/testing/mocks'
 import { makeSbUserId, SbUser, SbUserId } from '../../../common/users/sb-user'
+import { deleteUserRecordsForGame } from '../models/games-users'
 import { RallyPointService } from '../rally-point/rally-point-service'
 import { FakeClock, StopCriteria } from '../time/testing/fake-clock'
 import { RequestSessionLookup } from '../websockets/session-lookup'
@@ -22,6 +23,7 @@ import {
 } from '../websockets/testing/websockets'
 import { TypedPublisher } from '../websockets/typed-publisher'
 import { COUNTDOWN_TIME_MS, GameLoaderService, GAME_LAUNCH_TIMEOUT_MS } from './game-loader-service'
+import { deleteRecordForGame } from './game-models'
 import { GameplayActivityRegistry } from './gameplay-activity-registry'
 import { registerGame } from './registration'
 
@@ -297,5 +299,58 @@ describe('games/game-loader-service', () => {
       type: 'cancel',
       id: 'game-0',
     })
+    expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
+    expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
+  })
+
+  test('1 human vs AI - failure', async () => {
+    registerActive(1, client1)
+    const gameConfig: GameConfig = {
+      gameSource: GameSource.Lobby,
+      gameType: GameType.Melee,
+      gameSubType: 0,
+      teams: [
+        [
+          { id: makeSbUserId(1), race: 'p', isComputer: false, slotNumber: 0 },
+          { id: makeSbUserId(-1), race: 'z', isComputer: true, slotNumber: 1 },
+        ],
+      ],
+    }
+
+    const gameLoadPromise = gameLoaderService.loadGame({
+      mapId: MAP_ID,
+      gameConfig,
+    })
+    gameLoadPromise.catch(() => {})
+    await new Promise(resolve => setTimeout(resolve, 25))
+
+    expect(client1.publish).toHaveBeenCalledWith(
+      GameLoaderService.getLoaderPlayerPath('game-0', makeSbUserId(1)),
+      {
+        type: 'begin',
+        id: 'game-0',
+        gameConfig,
+        mapInfo: expect.anything(),
+        userInfos: [USER_1],
+        resultCode: expect.any(String),
+        routes: undefined,
+      } satisfies GameLoadBeginEvent,
+    )
+    asMockedFunction(client1.publish).mockClear()
+
+    gameLoaderService.registerPlayerFailed('game-0', makeSbUserId(1))
+
+    await Promise.all([
+      await new Promise(resolve => setTimeout(resolve, 25)),
+
+      expect(gameLoadPromise).rejects.toThrowErrorMatchingInlineSnapshot(`"player failed to load"`),
+    ])
+
+    expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
+      type: 'cancel',
+      id: 'game-0',
+    })
+    expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
+    expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
   })
 })

@@ -220,6 +220,9 @@ export class RallyPointService {
     if (!this.routeCreator) {
       throw new Error('RallyPointService is not initialized')
     }
+    if (!player1 || !player2) {
+      throw new Error('one or more players are not connected')
+    }
 
     const pings1 = this.clientPings.get(player1) ?? new Map()
     const pings2 = this.clientPings.get(player2) ?? new Map()
