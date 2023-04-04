@@ -11,6 +11,11 @@ export class GameplayActivityRegistry {
     }
   }
 
+  private internalRegisterActiveClient(userId: SbUserId, client: ClientSocketsGroup) {
+    client.once('close', this.onClientClose)
+    this.userClients.set(userId, client)
+  }
+
   /**
    * Attempts to register a client as owning the active gameplay activity for a user.
    *
@@ -21,8 +26,7 @@ export class GameplayActivityRegistry {
       return false
     }
 
-    client.once('close', this.onClientClose)
-    this.userClients.set(userId, client)
+    this.internalRegisterActiveClient(userId, client)
     return true
   }
 
@@ -44,7 +48,7 @@ export class GameplayActivityRegistry {
     }
 
     for (const [userId, client] of clients) {
-      this.userClients.set(userId, client)
+      this.internalRegisterActiveClient(userId, client)
     }
     return [true, []]
   }
@@ -55,6 +59,7 @@ export class GameplayActivityRegistry {
    * @returns true if a client was registered for that user, false otherwise.
    */
   unregisterClientForUser(userId: SbUserId): boolean {
+    this.userClients.get(userId)?.removeListener('close', this.onClientClose)
     return this.userClients.delete(userId)
   }
 

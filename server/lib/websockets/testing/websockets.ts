@@ -76,6 +76,13 @@ export class FakeNydusServer
     })
   })
 
+  onClose = jest.fn((client: NydusClient) => {
+    const inspectableClient = client as InspectableNydusClient
+    for (const clients of this.fakeSubscriptions.values()) {
+      clients.delete(inspectableClient)
+    }
+  })
+
   testonlyClear() {
     this.subscribeClient.mockClear()
     this.unsubscribeClient.mockClear()
@@ -98,7 +105,13 @@ export class InspectableNydusClient extends NydusClient {
   // documentation (the arguments are named, vs the arg_0, arg_1 stuff from Jest)
   publish: (path: string, data: any) => void = jest.fn()
   unsubscribe: (path: string) => boolean = jest.fn()
-  disconnect = jest.fn(() => this.emit('close', 'CLIENT_DISCONNECT'))
+  disconnect = jest.fn(() => this.conn.emit('close', 'CLIENT_DISCONNECT'))
+}
+
+class FakeConnection extends EventEmitter {
+  constructor(readonly id: string, readonly request: IncomingMessage) {
+    super()
+  }
 }
 
 export function clearTestLogs(nydus: NydusServer) {
@@ -148,15 +161,9 @@ export class NydusConnector {
     this.sessionLookup.set(fakeRequest, fakeSession)
     const client = new InspectableNydusClient(
       id,
-      {
-        id,
-        request: fakeRequest,
-        on() {
-          return this
-        },
-      } as any as eio.Socket,
+      new FakeConnection(id, fakeRequest) as any as eio.Socket,
       () => {},
-      () => {},
+      this.fakeNydus.onClose,
       () => {},
     )
 

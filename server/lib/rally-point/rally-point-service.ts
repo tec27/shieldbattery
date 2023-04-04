@@ -9,7 +9,7 @@ import createDeferred, { Deferred } from '../../../common/async/deferred'
 import { RallyPointServer, ResolvedRallyPointServer } from '../../../common/rally-point'
 import { SbUserId } from '../../../common/users/sb-user'
 import isDev from '../env/is-dev'
-import log from '../logging/logger'
+import { default as log } from '../logging/logger'
 import { ClientSocketsGroup, ClientSocketsManager } from '../websockets/socket-groups'
 import { addRallyPointServer, retrieveRallyPointServers, updateRallyPointServer } from './models'
 
@@ -286,6 +286,7 @@ export class RallyPointService {
    */
   updatePing(client: ClientSocketsGroup, serverId: number, ping: number) {
     if (!this.servers.has(serverId)) {
+      log.warn(`got ping for unknown server: ${serverId}`)
       return
     }
 

@@ -35,6 +35,7 @@ export enum GameLoadErrorType {
   GameNotFound = 'gameNotFound',
   PlayerFailed = 'playerFailed',
   LaunchTimeout = 'launchTimeout',
+  NoRoute = 'noRoute',
 }
 
 interface GameLoadErrorTypeToData {
@@ -43,6 +44,9 @@ interface GameLoadErrorTypeToData {
     userId: SbUserId
   }
   [GameLoadErrorType.LaunchTimeout]: {
+    userIds: SbUserId[]
+  }
+  [GameLoadErrorType.NoRoute]: {
     userIds: SbUserId[]
   }
 }
@@ -79,7 +83,9 @@ class LoadInProgress {
   untilLoadedStateChanged(): Promise<void> {
     return raceAbort(
       this.abortController.signal,
-      Promise.race(Array.from(this.loadingPromises.values())),
+      this.loadingPromises.size
+        ? Promise.race(Array.from(this.loadingPromises.values()))
+        : Promise.resolve(),
     )
   }
 
@@ -97,7 +103,8 @@ class LoadInProgress {
 
   registerPlayerLoaded(userId: SbUserId) {
     this.loadingState.set(userId, true)
-    this.loadingPromises.get(userId)!.resolve()
+    this.loadingPromises.get(userId)?.resolve()
+    this.loadingPromises.delete(userId)
   }
 
   registerPlayerFailed(userId: SbUserId) {
@@ -106,6 +113,13 @@ class LoadInProgress {
       new GameLoaderError(GameLoadErrorType.PlayerFailed, 'player failed to load', {
         data: { userId },
       }),
+    )
+  }
+
+  performCountdown(clock: Clock): Promise<void> {
+    return raceAbort(
+      this.abortController.signal,
+      new Promise(resolve => clock.setTimeout(resolve, COUNTDOWN_TIME_MS)),
     )
   }
 }
@@ -190,11 +204,7 @@ export class GameLoaderService {
 
         const client = this.gameplayActivityRegistry.getClientForUser(playerId)
         if (!client) {
-          loadInProgress.abort(
-            new GameLoaderError(GameLoadErrorType.PlayerFailed, 'player failed to load', {
-              data: { userId: playerId },
-            }),
-          )
+          loadInProgress.registerPlayerFailed(playerId)
         } else {
           client.subscribe(gamePath)
           client.subscribe<GameLoadBeginEvent>(
@@ -210,7 +220,13 @@ export class GameLoaderService {
             }),
           )
 
+          const onClose = () => {
+            loadInProgress.registerPlayerFailed(playerId)
+          }
+          client.once('close', onClose)
+
           subscriptionCleanupFuncs.push(() => {
+            client.removeListener('close', onClose)
             client.unsubscribe(gamePath)
             client.unsubscribe(GameLoaderService.getLoaderPlayerPath(gameId, playerId))
           })
@@ -311,7 +327,7 @@ export class GameLoaderService {
         type: 'countdown',
         id: gameId,
       })
-      await new Promise(resolve => this.clock.setTimeout(resolve, COUNTDOWN_TIME_MS))
+      await loadInProgress.performCountdown(this.clock)
 
       loadInProgress.throwIfAborted()
       this.typedPublisher.publish(GameLoaderService.getLoaderPath(gameId), {
@@ -383,10 +399,23 @@ export class GameLoaderService {
 
     return Promise.all(
       needRoutes.map(([p1, p2]) =>
-        this.rallyPointService.createBestRoute(
-          this.gameplayActivityRegistry.getClientForUser(p1)!,
-          this.gameplayActivityRegistry.getClientForUser(p2)!,
-        ),
+        this.rallyPointService
+          .createBestRoute(
+            this.gameplayActivityRegistry.getClientForUser(p1)!,
+            this.gameplayActivityRegistry.getClientForUser(p2)!,
+          )
+          .catch(err => {
+            // TODO(tec27): Potentially this is recoverable if we waited a bit longer (e.g. one of
+            // the players may still be pinging servers they can both reach). Would be nice to maybe
+            // wait instead of failing immediately here (but we'll also probably replace this
+            // system soon?)
+            log.debug({ err }, 'error creating route between players')
+            throw new GameLoaderError(
+              GameLoadErrorType.NoRoute,
+              'could not find a route between players',
+              { data: { userIds: [p1, p2] } },
+            )
+          }),
       ),
     )
   }
