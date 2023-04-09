@@ -109,6 +109,7 @@ class LoadInProgress {
 
   registerPlayerFailed(userId: SbUserId) {
     this.loadingState.set(userId, false)
+    this.loadingPromises.delete(userId)
     this.abort(
       new GameLoaderError(GameLoadErrorType.PlayerFailed, 'player failed to load', {
         data: { userId },

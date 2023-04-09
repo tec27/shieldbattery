@@ -4,6 +4,8 @@ import RallyPointCreator, { CreatedRoute } from 'rally-point-creator'
 import { GameConfig, GameSource, GameType } from '../../../common/games/configuration'
 import {
   GameLoadBeginEvent,
+  GameLoadCancelEvent,
+  GameLoadCompleteEvent,
   GameLoadCountdownEvent,
   GameLoadProgressEvent,
   GameLoadRoutesEvent,
@@ -261,7 +263,7 @@ describe('games/game-loader-service', () => {
     expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'complete',
       id: 'game-0',
-    })
+    } satisfies GameLoadCompleteEvent)
 
     await expect(gameLoadPromise).resolves.toBeUndefined()
   })
@@ -314,7 +316,7 @@ describe('games/game-loader-service', () => {
     expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
     expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
   })
@@ -365,7 +367,7 @@ describe('games/game-loader-service', () => {
     expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
     expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
   })
@@ -486,7 +488,7 @@ describe('games/game-loader-service', () => {
     expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'complete',
       id: 'game-0',
-    })
+    } satisfies GameLoadCompleteEvent)
 
     await expect(gameLoadPromise).resolves.toBeUndefined()
   })
@@ -553,11 +555,11 @@ describe('games/game-loader-service', () => {
     expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(client2.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
     expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
   })
@@ -626,11 +628,11 @@ describe('games/game-loader-service', () => {
     expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(client2.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
     expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
   })
@@ -701,11 +703,11 @@ describe('games/game-loader-service', () => {
     expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(client2.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
     expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
   })
@@ -775,11 +777,11 @@ describe('games/game-loader-service', () => {
     expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(client2.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
     expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
   })
@@ -848,7 +850,7 @@ describe('games/game-loader-service', () => {
     expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
     expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
   })
@@ -917,8 +919,150 @@ describe('games/game-loader-service', () => {
     expect(client2.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
       type: 'cancel',
       id: 'game-0',
-    })
+    } satisfies GameLoadCancelEvent)
     expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
     expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
+  })
+
+  test('2 humans - player disconnects during countdown', async () => {
+    const clientGroup1 = registerActive(1, client1)
+    rallyPointService.updatePing(clientGroup1, 2, 10)
+    const clientGroup2 = registerActive(2, client2)
+    rallyPointService.updatePing(clientGroup2, 2, 10)
+
+    const gameConfig: GameConfig = {
+      gameSource: GameSource.Lobby,
+      gameType: GameType.Melee,
+      gameSubType: 0,
+      teams: [
+        [
+          { id: makeSbUserId(1), race: 'p', isComputer: false, slotNumber: 0 },
+          { id: makeSbUserId(2), race: 'z', isComputer: false, slotNumber: 1 },
+        ],
+      ],
+    }
+
+    const gameLoadPromise = gameLoaderService.loadGame({
+      mapId: MAP_ID,
+      gameConfig,
+    })
+    await new Promise(resolve => setTimeout(resolve, 10))
+
+    expect(client1.publish).toHaveBeenCalledWith(
+      GameLoaderService.getLoaderPlayerPath('game-0', makeSbUserId(1)),
+      {
+        type: 'begin',
+        id: 'game-0',
+        gameConfig,
+        mapInfo: expect.anything(),
+        userInfos: [USER_1, USER_2],
+        resultCode: expect.any(String),
+        routes: undefined,
+      } satisfies GameLoadBeginEvent,
+    )
+    expect(client1.publish).toHaveBeenCalledWith(
+      GameLoaderService.getLoaderPlayerPath('game-0', makeSbUserId(1)),
+      {
+        type: 'routes',
+        id: 'game-0',
+        routes: [
+          {
+            for: makeSbUserId(2),
+            server: RESOLVED_RALLY_POINT_WEST,
+            routeId: expect.any(String),
+            playerId: expect.any(Number),
+          },
+        ],
+        turnRate: 24,
+        userLatency: BwUserLatency.Low,
+      } satisfies GameLoadRoutesEvent,
+    )
+    asMockedFunction(client1.publish).mockClear()
+
+    expect(client2.publish).toHaveBeenCalledWith(
+      GameLoaderService.getLoaderPlayerPath('game-0', makeSbUserId(2)),
+      {
+        type: 'begin',
+        id: 'game-0',
+        gameConfig,
+        mapInfo: expect.anything(),
+        userInfos: [USER_1, USER_2],
+        resultCode: expect.any(String),
+        routes: undefined,
+      } satisfies GameLoadBeginEvent,
+    )
+    expect(client2.publish).toHaveBeenCalledWith(
+      GameLoaderService.getLoaderPlayerPath('game-0', makeSbUserId(2)),
+      {
+        type: 'routes',
+        id: 'game-0',
+        routes: [
+          {
+            for: makeSbUserId(1),
+            server: RESOLVED_RALLY_POINT_WEST,
+            routeId: expect.any(String),
+            playerId: expect.any(Number),
+          },
+        ],
+        turnRate: 24,
+        userLatency: BwUserLatency.Low,
+      } satisfies GameLoadRoutesEvent,
+    )
+    asMockedFunction(client2.publish).mockClear()
+
+    gameLoaderService.registerPlayerLoaded('game-0', makeSbUserId(1))
+    gameLoaderService.registerPlayerLoaded('game-0', makeSbUserId(2))
+    await new Promise(resolve => setTimeout(resolve, 10))
+
+    expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
+      type: 'progress',
+      id: 'game-0',
+      completed: [makeSbUserId(1), makeSbUserId(2)],
+    } satisfies GameLoadProgressEvent)
+    expect(client2.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
+      type: 'progress',
+      id: 'game-0',
+      completed: [makeSbUserId(1), makeSbUserId(2)],
+    } satisfies GameLoadProgressEvent)
+
+    expect(client1.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
+      type: 'countdown',
+      id: 'game-0',
+    } satisfies GameLoadCountdownEvent)
+    expect(client2.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
+      type: 'countdown',
+      id: 'game-0',
+    } satisfies GameLoadCountdownEvent)
+    asMockedFunction(client1.publish).mockClear()
+    asMockedFunction(client2.publish).mockClear()
+
+    await clock.runTimeoutsUntil({
+      criteria: StopCriteria.TimeReached,
+      timeMillis: clock.now() + 2000,
+    })
+    client1.disconnect()
+
+    await Promise.all([
+      new Promise(resolve => setTimeout(resolve, 10)),
+
+      expect(gameLoadPromise).rejects.toThrowErrorMatchingInlineSnapshot(`"player failed to load"`),
+    ])
+
+    expect(client2.publish).toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
+      type: 'cancel',
+      id: 'game-0',
+    } satisfies GameLoadCancelEvent)
+    asMockedFunction(client2.publish).mockClear()
+    expect(deleteRecordForGame).toHaveBeenCalledWith('game-0')
+    expect(deleteUserRecordsForGame).toHaveBeenCalledWith('game-0')
+
+    await clock.runTimeoutsUntil({
+      criteria: StopCriteria.EmptyQueue,
+    })
+
+    expect(client2.publish).not.toHaveBeenCalledWith(GameLoaderService.getLoaderPath('game-0'), {
+      type: 'complete',
+      id: 'game-0',
+    } satisfies GameLoadCompleteEvent)
   })
 })

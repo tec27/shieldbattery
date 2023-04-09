@@ -107,14 +107,25 @@ export class FakeClock extends Clock {
           case StopCriteria.NumTasks:
             return tasksRun >= stopCondition.numTasks
           case StopCriteria.TimeReached:
-            return this.currentTime >= stopCondition.timeMillis
+            return (
+              this.currentTime >= stopCondition.timeMillis &&
+              // We want to continue running if the next task's timeout is exactly the current time,
+              // as that task should execute too
+              this.timeoutsToRun[0]?.[1] > this.currentTime
+            )
           default:
             return assertUnreachable(stopCondition)
         }
       }
 
+      if (stopCondition.criteria === StopCriteria.TimeReached) {
+        // If we're trying to run to a particular time, insert a task at exactly that time. This
+        // lets us avoid doing special checks in the loop below for this criteria to ensure we stop
+        // at exactly this time and don't run an extra task later than it.
+        this.timeoutsToRun.unshift([() => {}, stopCondition.timeMillis])
+      }
+
       while (!stopConditionMet() && this.timeoutsToRun.length) {
-        // TODO(tec27): We could probably insert these in a sorted manner instead :)
         this.timeoutsToRun.sort((a, b) => a[1] - b[1])
 
         const [fn, timeoutMillis] = this.timeoutsToRun.shift()!
