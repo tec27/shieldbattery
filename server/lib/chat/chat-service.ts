@@ -1093,10 +1093,12 @@ export default class ChatService {
   ): Promise<SbUserId | undefined> {
     const { newOwnerId } = await removeUserFromChannel(userId, channelId)
 
-    const updated = this.state.channels.get(channelId)!.delete(userId)
-    this.state = updated.size
-      ? this.state.setIn(['channels', channelId], updated)
-      : this.state.deleteIn(['channels', channelId])
+    if (this.state.channels.has(channelId)) {
+      const updated = this.state.channels.get(channelId)!.delete(userId)
+      this.state = updated.size
+        ? this.state.setIn(['channels', channelId], updated)
+        : this.state.deleteIn(['channels', channelId])
+    }
 
     if (this.state.users.has(userId) && this.state.users.get(userId)!.has(channelId)) {
       // TODO(tec27): Remove `any` cast once Immutable properly types this call again
