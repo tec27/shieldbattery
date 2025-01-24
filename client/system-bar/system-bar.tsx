@@ -3,16 +3,16 @@ import styled from 'styled-components'
 import { DEV_INDICATOR } from '../../common/flags'
 import { useIsAdmin } from '../admin/admin-permissions'
 import { MaterialIcon } from '../icons/material/material-icon'
+import Logo from '../logos/logo-no-bg.svg'
+import LogoText from '../logos/logotext-white-154x56.svg'
 import { IconButton } from '../material/button'
-import { shadow4dp } from '../material/shadows'
 import { zIndexAppBar } from '../material/zindex'
 import { push } from '../navigation/routing'
-import { blue800, colorError } from '../styles/colors'
+import { colorError } from '../styles/colors'
 import { caption } from '../styles/typography'
 import { SizeLeft, SizeRight, SizeTop } from './window-controls'
 
 const Container = styled.header`
-  ${shadow4dp};
   flex-grow: 0;
   flex-shrink: 0;
 
@@ -24,7 +24,7 @@ const Container = styled.header`
 
   display: flex;
   flex-direction: row;
-  background-color: ${blue800};
+  background-color: var(--color-grey-blue30);
   overflow: hidden;
   z-index: ${zIndexAppBar};
 
@@ -63,6 +63,27 @@ const DevIndicator = styled.div`
   -webkit-app-region: no-drag;
 `
 
+const SystemBarLogo = styled.div`
+  display: flex;
+  align-items: center;
+`
+
+// FIXME: Make this 20px tall once we have a proper version of this asset for this
+const StyledLogo = styled(Logo)`
+  width: auto;
+  height: 30px;
+
+  flex: 0 0 auto;
+`
+
+// FIXME: Make this 24px tall once we have a proper version of this asset for this
+const StyledLogoText = styled(LogoText)`
+  width: auto;
+  height: 36px;
+
+  flex: 0 0 auto;
+`
+
 export function SystemBar() {
   useLayoutEffect(() => {
     document.body.style.setProperty('--sb-system-bar-height', '24px')
@@ -81,6 +102,10 @@ export function SystemBar() {
       <SizeLeft />
       <SizeRight />
       <LeftSide>
+        <SystemBarLogo>
+          <StyledLogo />
+          <StyledLogoText />
+        </SystemBarLogo>
         {DEV_INDICATOR ? (
           // TODO(tec27): Find a place for this + admin that will show up on the web version too
           <DevIndicator title='Go to dev pages' onClick={() => push('/dev')}>

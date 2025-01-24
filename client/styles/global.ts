@@ -5,9 +5,9 @@ import {
   background300,
   background700,
   CardLayer,
-  colorBackground,
   colorTextFaint,
   colorTextPrimary,
+  THEME_CSS,
 } from './colors'
 import { body1 } from './typography'
 
@@ -23,17 +23,22 @@ const GlobalStyle = createGlobalStyle`
   }
 
   html {
+    ${THEME_CSS};
     ${body1};
+
     font-family: Inter, sans-serif;
+    font-optical-sizing: auto;
     font-weight: normal;
-    color: ${colorTextPrimary};
+    color: var(--theme-on-surface);
     font-size: 14px;
     line-height: 1.42857;
-    background-color: ${colorBackground};
-    --sb-color-background: ${colorBackground};
+
+    background-color: var(--theme-surface);
+    --sb-color-background: var(--theme-surface);
 
     /** This will be overridden on the body styles in Electron */
     --sb-system-bar-height: 0px;
+
   }
 
   html, body, #app {

@@ -20,11 +20,11 @@ import { Splash } from './landing/splash'
 import { LoadingFilter } from './loading/loading-filter'
 import { LoggedOutContent } from './logged-out-content'
 import { logger } from './logging/logger'
-import { MainLayout } from './main-layout'
 import { LoginRoute } from './navigation/custom-routes'
 import { UNAUTHORIZED_EMITTER } from './network/fetch'
 import { createGraphqlClient } from './network/graphql-client'
 import { SiteConnectedFilter } from './network/site-connected-filter'
+import { MainLayout } from './new-main-layout'
 import {
   AcceptableUsePage,
   PrivacyPolicyPage,

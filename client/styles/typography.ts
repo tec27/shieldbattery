@@ -1,19 +1,20 @@
 import styled, { css } from 'styled-components'
 
-export const textSizeButton = '14px'
-
 export const singleLine = css`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 `
 
-export const cabin = css`
-  font-family: Cabin, Inter, sans-serif;
+export const sofiaSans = css`
+  font-family: 'Sofia Sans', Inter, sans-serif;
+  font-optical-sizing: auto;
 `
 
+// FIXME: Update these to 2025 typescale
+
 export const buttonText = css`
-  font-size: ${textSizeButton};
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 1.4px;
   line-height: 36px;
@@ -45,7 +46,7 @@ export const Headline2 = styled.div`
 `
 
 export const headline3 = css`
-  ${cabin};
+  ${sofiaSans};
   font-size: 44px;
   font-weight: 400;
   line-height: 56px;
@@ -81,7 +82,7 @@ export const Headline5 = styled.div`
 `
 
 export const headline6 = css`
-  ${cabin};
+  ${sofiaSans};
   font-size: 22px;
   font-weight: 500;
   letter-spacing: 0.84px;
@@ -106,7 +107,7 @@ export const Subtitle1 = styled.div`
 `
 
 export const subtitle2 = css`
-  ${cabin};
+  ${sofiaSans};
   font-size: 18px;
   font-weight: 500;
   letter-spacing: 0.56px;
@@ -130,7 +131,7 @@ export const Body1 = styled.div`
 `
 
 export const body2 = css`
-  ${cabin};
+  ${sofiaSans};
   font-size: 16px;
   font-weight: 500;
   letter-spacing: 0.84px;

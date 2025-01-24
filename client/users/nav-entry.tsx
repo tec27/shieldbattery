@@ -7,7 +7,7 @@ import { buttonReset } from '../material/button-reset'
 import { Ripple } from '../material/ripple'
 import { AnimatedExpandIcon } from '../styles/animated-expand-icon'
 import { colorTextFaint, colorTextPrimary } from '../styles/colors'
-import { cabin, singleLine } from '../styles/typography'
+import { singleLine, sofiaSans } from '../styles/typography'
 
 const Container = styled.button`
   ${buttonReset};
@@ -45,7 +45,7 @@ const StyledAvatar = styled(Avatar)`
 `
 
 const User = styled.div`
-  ${cabin}
+  ${sofiaSans}
   ${singleLine};
 
   width: 140px;
