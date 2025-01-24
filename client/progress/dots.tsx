@@ -68,7 +68,7 @@ interface DotsIndicatorProps {
   className?: string
 }
 
-export default function DotsIndicator({ showImmediately = false, className }: DotsIndicatorProps) {
+export function DotsIndicator({ showImmediately = false, className }: DotsIndicatorProps) {
   return (
     <Root className={className} $showImmediately={showImmediately}>
       <Dot $delay='-1200ms' />
@@ -78,6 +78,8 @@ export default function DotsIndicator({ showImmediately = false, className }: Do
     </Root>
   )
 }
+
+export default DotsIndicator
 
 const LoadingArea = styled.div<{ $showImmediately?: boolean }>`
   display: flex;

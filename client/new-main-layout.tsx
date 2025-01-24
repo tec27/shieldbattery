@@ -275,13 +275,15 @@ const MenuItemsEnd = styled.div`
   }
 `
 
-const PlayButtonRoot = styled.div`
+const PlayButtonRoot = styled.a`
   ${singleLine};
 
   position: relative;
   width: 240px;
   height: 72px;
   margin: 0 -16px;
+
+  display: block;
   overflow: visible; /* Allow the shadow to exceed bounds */
 
   color: var(--theme-on-surface);
@@ -291,6 +293,49 @@ const PlayButtonRoot = styled.div`
   text-align: center;
   text-shadow: 1px 1px rgba(0, 0, 0, 0.24);
   text-transform: uppercase;
+
+  &:link,
+  &:visited {
+    color: var(--theme-on-surface);
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      color: var(--theme-on-surface);
+      text-decoration: none;
+    }
+
+    &:focus-visible {
+      outline: none;
+
+      &:after {
+        content: '';
+        position: absolute;
+        top: 16px;
+        left: 20px;
+        right: 20px;
+        bottom: 16px;
+        outline: 2px solid var(--theme-amber);
+        border-radius: 4px;
+      }
+    }
+  }
+
+  &:active {
+    color: var(--theme-on-surface);
+    text-decoration: none;
+    --menu-item-fill: var(--color-grey-blue60);
+
+    &:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 20px;
+      right: 20px;
+      bottom: 0;
+      background: var(--menu-item-fill);
+    }
+  }
 `
 
 const PlayButtonBackground = styled.svg`
@@ -314,79 +359,84 @@ function PlayButton({ children }: { children?: React.ReactNode }) {
   const shadowId = useId()
 
   return (
-    <PlayButtonRoot>
-      <PlayButtonBackground viewBox='0 0 240 72'>
-        <defs>
-          <linearGradient
-            id={gradientId}
-            x1='52'
-            y1='-20'
-            x2='188'
-            y2='88'
-            gradientUnits='userSpaceOnUse'>
-            <stop stopColor='var(--color-blue70)' />
-            <stop offset='0.418214' stopColor='var(--color-blue50)' />
-            <stop offset='0.68' stopColor='var(--color-blue50)' />
-            <stop offset='1' stopColor='var(--color-blue60)' />
-          </linearGradient>
-          {/*
+    <Link href='/play/' asChild={true}>
+      <PlayButtonRoot>
+        <PlayButtonBackground viewBox='0 0 240 72'>
+          <defs>
+            <linearGradient
+              id={gradientId}
+              x1='52'
+              y1='-20'
+              x2='188'
+              y2='88'
+              gradientUnits='userSpaceOnUse'>
+              <stop stopColor='var(--color-blue70)' />
+              <stop offset='0.418214' stopColor='var(--color-blue50)' />
+              <stop offset='0.68' stopColor='var(--color-blue50)' />
+              <stop offset='1' stopColor='var(--color-blue60)' />
+            </linearGradient>
+            {/*
             NOTE(tec27): This is a level 2 elevation shadow copied out of figma, we could probably
             simplify this a bunch
           */}
-          <filter
-            id={shadowId}
-            x='-10'
-            y='0'
-            width='260'
-            height='80'
-            filterUnits='userSpaceOnUse'
-            colorInterpolationFilters='sRGB'>
-            <feFlood floodOpacity='0' result='BackgroundImageFix' />
-            <feColorMatrix
-              in='SourceAlpha'
-              type='matrix'
-              values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'
-              result='hardAlpha'
-            />
-            <feMorphology
-              radius='2'
-              operator='dilate'
-              in='SourceAlpha'
-              result='effect1_dropShadow_634_1625'
-            />
-            <feOffset dy='2' />
-            <feGaussianBlur stdDeviation='3' />
-            <feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0' />
-            <feBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow_634_1625' />
-            <feColorMatrix
-              in='SourceAlpha'
-              type='matrix'
-              values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'
-              result='hardAlpha'
-            />
-            <feOffset dy='1' />
-            <feGaussianBlur stdDeviation='1' />
-            <feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.3 0' />
-            <feBlend
-              mode='normal'
-              in2='effect1_dropShadow_634_1625'
-              result='effect2_dropShadow_634_1625'
-            />
-            <feBlend
-              mode='normal'
-              in='SourceGraphic'
-              in2='effect2_dropShadow_634_1625'
-              result='shape'
-            />
-          </filter>
-        </defs>
-        <polygon
-          points={`0,0 240,0 218,72 22,72`}
-          fill={`url(#${gradientId})`}
-          filter={`url(#${shadowId})`}
-        />
-        <path
-          d={`
+            <filter
+              id={shadowId}
+              x='-10'
+              y='0'
+              width='260'
+              height='80'
+              filterUnits='userSpaceOnUse'
+              colorInterpolationFilters='sRGB'>
+              <feFlood floodOpacity='0' result='BackgroundImageFix' />
+              <feColorMatrix
+                in='SourceAlpha'
+                type='matrix'
+                values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'
+                result='hardAlpha'
+              />
+              <feMorphology
+                radius='2'
+                operator='dilate'
+                in='SourceAlpha'
+                result='effect1_dropShadow_634_1625'
+              />
+              <feOffset dy='2' />
+              <feGaussianBlur stdDeviation='3' />
+              <feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0' />
+              <feBlend
+                mode='normal'
+                in2='BackgroundImageFix'
+                result='effect1_dropShadow_634_1625'
+              />
+              <feColorMatrix
+                in='SourceAlpha'
+                type='matrix'
+                values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'
+                result='hardAlpha'
+              />
+              <feOffset dy='1' />
+              <feGaussianBlur stdDeviation='1' />
+              <feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.3 0' />
+              <feBlend
+                mode='normal'
+                in2='effect1_dropShadow_634_1625'
+                result='effect2_dropShadow_634_1625'
+              />
+              <feBlend
+                mode='normal'
+                in='SourceGraphic'
+                in2='effect2_dropShadow_634_1625'
+                result='shape'
+              />
+            </filter>
+          </defs>
+          <polygon
+            points={`0,0 240,0 218,72 22,72`}
+            fill={`url(#${gradientId})`}
+            filter={`url(#${shadowId})`}
+          />
+          <path
+            d={`
             M 239,0
             L 217,71
             L 23,71
@@ -395,15 +445,16 @@ function PlayButton({ children }: { children?: React.ReactNode }) {
             L 217,71
             Z
           `}
-          fill='none'
-          stroke='var(--color-blue90)'
-          strokeWidth='2'
-          strokeOpacity='0.4'
-          strokeLinecap='square'
-        />
-      </PlayButtonBackground>
-      <PlayButtonContent>{children}</PlayButtonContent>
-    </PlayButtonRoot>
+            fill='none'
+            stroke='var(--color-blue90)'
+            strokeWidth='2'
+            strokeOpacity='0.4'
+            strokeLinecap='square'
+          />
+        </PlayButtonBackground>
+        <PlayButtonContent>{children}</PlayButtonContent>
+      </PlayButtonRoot>
+    </Link>
   )
 }
 
@@ -457,13 +508,11 @@ function AppBar() {
 
 const Content = styled.div``
 
-export function MainLayout() {
+export function MainLayout({ children }: { children?: React.ReactNode }) {
   return (
     <Root>
       <AppBar />
-      <Content>
-        <h1>Main Layout</h1>
-      </Content>
+      <Content>{children}</Content>
     </Root>
   )
 }
