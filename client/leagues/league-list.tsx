@@ -49,7 +49,8 @@ export function LeagueRoot(props: { params: any }) {
 
 const ListRoot = styled.div`
   max-width: 1120px;
-  padding: 12px 24px;
+  margin: 0 auto;
+  padding: 12px 24px 12px calc(24px + var(--pixel-shove-x));
 
   display: flex;
   flex-direction: column;

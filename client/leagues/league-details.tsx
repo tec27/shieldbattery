@@ -65,7 +65,6 @@ const PageRoot = styled.div`
   position: relative;
   width: 100%;
   height: 100%;
-  padding: 0 24px 12px;
 
   overflow-x: hidden;
   overflow-y: auto;
@@ -121,6 +120,8 @@ const DetailsRoot = styled.div`
   max-width: 704px;
   min-height: min-content;
   height: 100%;
+  margin: 0 auto;
+  padding-left: var(--pixel-shove-x);
   padding-top: 12px;
 
   display: flex;
