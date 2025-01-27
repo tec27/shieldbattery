@@ -3,8 +3,7 @@ import styled from 'styled-components'
 import { DEV_INDICATOR } from '../../common/flags'
 import { useIsAdmin } from '../admin/admin-permissions'
 import { MaterialIcon } from '../icons/material/material-icon'
-import Logo from '../logos/logo-no-bg.svg'
-import LogoText from '../logos/logotext-white-154x56.svg'
+import Lockup from '../logos/lockup-system-bar-24px.svg'
 import { IconButton } from '../material/button'
 import { zIndexAppBar } from '../material/zindex'
 import { push } from '../navigation/routing'
@@ -63,25 +62,11 @@ const DevIndicator = styled.div`
   -webkit-app-region: no-drag;
 `
 
-const SystemBarLogo = styled.div`
-  display: flex;
-  align-items: center;
-`
-
-// FIXME: Make this 20px tall once we have a proper version of this asset for this
-const StyledLogo = styled(Logo)`
+const StyledLockup = styled(Lockup)`
   width: auto;
-  height: 30px;
-
-  flex: 0 0 auto;
-`
-
-// FIXME: Make this 24px tall once we have a proper version of this asset for this
-const StyledLogoText = styled(LogoText)`
-  width: auto;
-  height: 36px;
-
-  flex: 0 0 auto;
+  height: 24px;
+  flex-grow: 0;
+  flex-shrink: 0;
 `
 
 export function SystemBar() {
@@ -102,10 +87,7 @@ export function SystemBar() {
       <SizeLeft />
       <SizeRight />
       <LeftSide>
-        <SystemBarLogo>
-          <StyledLogo />
-          <StyledLogoText />
-        </SystemBarLogo>
+        <StyledLockup />
         {DEV_INDICATOR ? (
           // TODO(tec27): Find a place for this + admin that will show up on the web version too
           <DevIndicator title='Go to dev pages' onClick={() => push('/dev')}>
