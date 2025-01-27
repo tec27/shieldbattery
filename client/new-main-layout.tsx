@@ -506,7 +506,9 @@ function AppBar() {
   )
 }
 
-const Content = styled.div``
+const Content = styled.div`
+  overflow: auto;
+`
 
 export function MainLayout({ children }: { children?: React.ReactNode }) {
   return (

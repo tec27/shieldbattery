@@ -73,17 +73,21 @@ import {
 const LadderPage = styled.div`
   width: 100%;
   height: 100%;
+  padding-left: var(--pixel-shove-x);
+  padding-top: 8px;
 
   display: flex;
   flex-direction: column;
+
+  align-items: center;
   overflow: hidden;
 `
 
 const PageHeader = styled.div`
   position: relative;
   width: 100%;
-  max-width: 832px;
-  padding: 8px 16px;
+  max-width: 848px;
+  padding: 8px 24px;
   flex-shrink: 0;
 
   display: flex;
@@ -110,7 +114,6 @@ const Content = styled.div`
 
 const LastUpdatedText = styled.div`
   ${body1};
-  padding-right: 16px;
   flex-grow: 1;
   flex-shrink: 0;
 
@@ -381,23 +384,30 @@ export function Ladder({ matchmakingType: routeType, seasonId }: LadderProps) {
 }
 
 const TableContainer = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
-  position: relative;
+  margin: 0;
+  /*
+    NOTE(tec27): since we always have a scrollbar gutter, that effectively adds padding to the
+    right side, so we need less there to make it even
+  */
+  padding: 0 8px 0 24px;
 
   overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-gutter: stable;
 `
 
 const FiltersContainer = styled.div`
+  width: 100%;
+  max-width: 800px;
+  margin: 16px auto 8px;
+
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 8px;
-
-  width: 100%;
-  max-width: min(800px, 100% - 32px);
-  margin: 16px 16px 8px;
 `
 
 const StyledSearchInput = styled(SearchInput)`
@@ -414,10 +424,11 @@ const DivisionSelect = styled(Select)`
 
 const Table = styled.div`
   width: 100%;
+  max-width: 800px;
   height: auto;
-  max-width: min(800px, 100% - 32px);
-  margin: 8px 16px 0px;
+  margin: 8px auto 0px;
   padding-bottom: 16px;
+
   border: 1px solid ${colorDividers};
   border-radius: 2px;
 `
