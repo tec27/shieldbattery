@@ -66,6 +66,10 @@ const PageRoot = styled.div`
   width: 100%;
   height: 100%;
 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
   overflow-x: hidden;
   overflow-y: auto;
 `
@@ -120,9 +124,6 @@ const DetailsRoot = styled.div`
   max-width: 704px;
   min-height: min-content;
   height: 100%;
-  margin: 0 auto;
-  padding-left: var(--pixel-shove-x);
-  padding-top: 12px;
 
   display: flex;
   flex-direction: column;

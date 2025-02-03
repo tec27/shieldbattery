@@ -1,27 +1,54 @@
-import React, { useId } from 'react'
-import styled from 'styled-components'
+import keycode from 'keycode'
+import React, { useId, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import styled, { css } from 'styled-components'
 import { Link, useRoute } from 'wouter'
 import { Avatar } from './avatars/avatar'
 import { MaterialIcon } from './icons/material/material-icon'
-import { IconButton } from './material/button'
-import { useAppSelector } from './redux-hooks'
+import { IconButton, useButtonHotkey } from './material/button'
+import { fastOutSlowIn } from './material/curve-constants'
+import { Tooltip } from './material/tooltip'
+import { NotificationsButton } from './notifications/activity-bar-entry'
+import { useAppDispatch, useAppSelector } from './redux-hooks'
+import { openSettings } from './settings/action-creators'
+import { useStableCallback } from './state-hooks'
 import { singleLine, sofiaSans } from './styles/typography'
 
-const Root = styled.div`
+const ALT_B = { keyCode: keycode('b'), altKey: true }
+const ALT_C = { keyCode: keycode('c'), altKey: true }
+const ALT_D = { keyCode: keycode('d'), altKey: true }
+const ALT_F = { keyCode: keycode('f'), altKey: true }
+const ALT_G = { keyCode: keycode('g'), altKey: true }
+const ALT_H = { keyCode: keycode('h'), altKey: true }
+const ALT_J = { keyCode: keycode('j'), altKey: true }
+const ALT_M = { keyCode: keycode('m'), altKey: true }
+const ALT_O = { keyCode: keycode('o'), altKey: true }
+const ALT_R = { keyCode: keycode('r'), altKey: true }
+const ALT_S = { keyCode: keycode('s'), altKey: true }
+
+const Root = styled.div<{ $sidebarOpen?: boolean }>`
   /* Note: width/height come from global styles */
   display: grid;
+  grid-template-columns: minmax(max-content, 1fr) ${props => (props.$sidebarOpen ? '360px' : '0')};
+  grid-template-areas:
+    'appbar appbar'
+    'content sidebar';
   grid-template-rows: auto 1fr;
+
+  transition: grid-template-columns 250ms ${fastOutSlowIn};
 `
 
 const AppBarRoot = styled.div`
+  grid-area: appbar;
   height: 72px;
   position: relative;
   padding: 0 8px 0 24px;
-  color: var(--theme-on-surface-variant);
 
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
+
+  color: var(--theme-on-surface-variant);
 
   &:before {
     content: '';
@@ -462,8 +489,24 @@ const ShadowedIcon = styled(MaterialIcon)`
   text-shadow: 1px 1px rgba(0, 0, 0, 0.24);
 `
 
-function AppBar() {
+const ShadowedToggleIcon = styled(ShadowedIcon)<{ $active?: boolean }>`
+  ${props =>
+    props.$active
+      ? css`
+          color: var(--theme-amber);
+        `
+      : css``};
+  transition: color 125ms linear;
+`
+
+function AppBar({ onToggleChat, sidebarOpen }: { onToggleChat: () => void; sidebarOpen: boolean }) {
+  const { t } = useTranslation()
+  const dispatch = useAppDispatch()
   const user = useAppSelector(s => s.auth.self?.user)
+  const settingsButtonRef = useRef<HTMLButtonElement>(null)
+  useButtonHotkey({ ref: settingsButtonRef, hotkey: ALT_S })
+  const chatButtonRef = useRef<HTMLButtonElement>(null)
+  useButtonHotkey({ ref: chatButtonRef, hotkey: ALT_H })
 
   return (
     <AppBarRoot>
@@ -494,27 +537,64 @@ function AppBar() {
         </MenuItemsEnd>
       </MenuItems>
       <IconButtons>
-        <IconButton icon={<ShadowedIcon icon='settings' />} title='Settings' ariaLabel='Settings' />
-        <IconButton
-          icon={<ShadowedIcon icon='notifications' />}
-          title='Notifications'
-          ariaLabel='Notifications'
-        />
-        <IconButton icon={<ShadowedIcon icon='chat' />} title='Chat' ariaLabel='Chat' />
+        <Tooltip
+          text={t('settings.activity.title', 'Settings (Alt + S)')}
+          position='bottom'
+          tabIndex={-1}>
+          <IconButton
+            ref={settingsButtonRef}
+            icon={<ShadowedIcon icon='settings' />}
+            onClick={() => dispatch(openSettings())}
+            testName='settings-button'
+          />
+        </Tooltip>
+        <NotificationsButton icon={<ShadowedIcon icon='notifications' />} />
+        <Tooltip
+          text={t('navigation.bar.chat', 'Toggle chat (ALT + H)')}
+          position='bottom'
+          tabIndex={-1}>
+          <IconButton
+            ref={chatButtonRef}
+            icon={<ShadowedToggleIcon icon='chat' $active={sidebarOpen} />}
+            onClick={onToggleChat}
+            testName='chat-sidebar-button'
+          />
+        </Tooltip>
       </IconButtons>
     </AppBarRoot>
   )
 }
 
 const Content = styled.div`
+  grid-area: content;
+  padding-left: var(--pixel-shove-x);
+  padding-top: 12px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
   overflow: auto;
 `
 
+const Sidebar = styled.div`
+  grid-area: sidebar;
+  width: 100%;
+  height: calc(100% + 8px);
+  margin-top: -8px;
+
+  background: red;
+`
+
 export function MainLayout({ children }: { children?: React.ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const onToggleChat = useStableCallback(() => setSidebarOpen(!sidebarOpen))
+
   return (
-    <Root>
-      <AppBar />
+    <Root $sidebarOpen={sidebarOpen}>
+      <AppBar onToggleChat={onToggleChat} sidebarOpen={sidebarOpen} />
       <Content>{children}</Content>
+      <Sidebar />
     </Root>
   )
 }

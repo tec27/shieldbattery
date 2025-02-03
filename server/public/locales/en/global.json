@@ -823,6 +823,9 @@
     "sendMessage": "Send a message"
   },
   "navigation": {
+    "bar": {
+      "chat": "Toggle chat (ALT + H)"
+    },
     "copyLink": {
       "copiedText": "Copied!",
       "defaultText": "Copy link"

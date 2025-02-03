@@ -73,8 +73,6 @@ import {
 const LadderPage = styled.div`
   width: 100%;
   height: 100%;
-  padding-left: var(--pixel-shove-x);
-  padding-top: 8px;
 
   display: flex;
   flex-direction: column;
