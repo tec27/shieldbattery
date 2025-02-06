@@ -1,14 +1,9 @@
 import { NydusClient, RouteInfo } from 'nydus-client'
 import { ChatReadyEvent } from '../../common/chat'
-import { SubscribedClientEvent, SubscribedUserEvent } from '../../common/websockets'
 import { WhispersReadyEvent } from '../../common/whispers'
 import { Dispatchable, dispatch } from '../dispatch-registry'
 
-type LoadingEvent =
-  | ChatReadyEvent
-  | SubscribedClientEvent
-  | SubscribedUserEvent
-  | WhispersReadyEvent
+type LoadingEvent = ChatReadyEvent | WhispersReadyEvent
 
 type LoadingEventToActionMap = {
   [E in LoadingEvent['type']]: (
@@ -20,20 +15,6 @@ const eventToAction: LoadingEventToActionMap = {
   chatReady(event) {
     return {
       type: '@loading/chatReady',
-      payload: event,
-    }
-  },
-
-  subscribedClient(event) {
-    return {
-      type: '@loading/subscribedClient',
-      payload: event,
-    }
-  },
-
-  subscribedUser(event) {
-    return {
-      type: '@loading/subscribedUser',
       payload: event,
     }
   },
