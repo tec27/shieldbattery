@@ -11,9 +11,7 @@ const options = {
   extraHeaders: {
     Authorization: `Bearer ${CREDENTIAL_STORAGE.get()}`,
   },
-  // NOTE(tec27): The typings for engine.io stuff continue to be incomplete and don't include all
-  // possible options =/
-} as any as Partial<NydusClientOptions>
+} satisfies Partial<NydusClientOptions>
 
 const siteSocket = createNydus(`${protocol}://${location.hostname}:${location.port}`, options)
 export default siteSocket

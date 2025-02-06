@@ -12,6 +12,7 @@ import { KeyListenerBoundary } from './keyboard/key-listener'
 import { logger } from './logging/logger'
 import { UNAUTHORIZED_EMITTER } from './network/fetch'
 import { createGraphqlClient } from './network/graphql-client'
+import { SiteSocketManager } from './network/site-socket-manager'
 import { MainLayout } from './new-main-layout'
 import { LoadingDotsArea } from './progress/dots'
 import { useAppDispatch, useAppSelector } from './redux-hooks'
@@ -101,6 +102,7 @@ export default function App() {
               <FileDropZoneProvider>
                 <React.Suspense fallback={<LoadingDotsArea />}>
                   <RedirectOnUnauthorized />
+                  <SiteSocketManager />
                   <Switch>
                     {!IS_PRODUCTION ? <Route path='/dev/*?' component={LoadableDev} /> : <></>}
                   </Switch>
