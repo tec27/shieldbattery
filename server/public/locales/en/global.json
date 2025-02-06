@@ -361,6 +361,11 @@
     "tabStats": "Stats",
     "tabSummary": "Summary"
   },
+  "games": {
+    "activity": {
+      "title": "Games"
+    }
+  },
   "ladder": {
     "activity": {
       "title": "Ladder"
@@ -824,7 +829,10 @@
   },
   "navigation": {
     "bar": {
-      "chat": "Toggle chat (ALT + H)"
+      "chat": "Toggle chat (ALT + H)",
+      "home": "Home",
+      "play": "Play",
+      "social": "Toggle social (ALT + H)"
     },
     "copyLink": {
       "copiedText": "Copied!",

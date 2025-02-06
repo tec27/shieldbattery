@@ -135,22 +135,16 @@ export const blue200 = '#90caf9'
 export const blue300 = '#64b5f6'
 export const blue400 = '#42a5f5'
 export const blue500 = '#2196f3'
-export const blue600 = '#1e88e5'
 export const blue700 = '#1976d2'
 export const blue800 = '#1565c0'
-export const blue900 = '#0d47a1'
 
 // FIXME: delete these
 /* Accent color */
 export const amberA100 = '#ffe57f'
 export const amberA200 = '#ffd740'
 export const amberA400 = '#ffc400'
-export const amberA700 = '#ffab00'
 
 /** Colors used for backgrounds (a muted grey-blue palette) */
-export const background50 = '#7B97BA'
-export const background100 = '#6584AA'
-export const background200 = '#577598'
 export const background300 = '#466180'
 export const background400 = '#30455F'
 export const background500 = '#243951'

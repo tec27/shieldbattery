@@ -28,8 +28,12 @@ const ALT_S = { keyCode: keycode('s'), altKey: true }
 
 const Root = styled.div<{ $sidebarOpen?: boolean }>`
   /* Note: width/height come from global styles */
+
+  --sb-sidebar-width: 320px;
+
   display: grid;
-  grid-template-columns: minmax(max-content, 1fr) ${props => (props.$sidebarOpen ? '360px' : '0')};
+  grid-template-columns: minmax(max-content, 1fr) ${props =>
+      props.$sidebarOpen ? 'var(--sb-sidebar-width)' : '0'};
   grid-template-areas:
     'appbar appbar'
     'content sidebar';
@@ -499,7 +503,13 @@ const ShadowedToggleIcon = styled(ShadowedIcon)<{ $active?: boolean }>`
   transition: color 125ms linear;
 `
 
-function AppBar({ onToggleChat, sidebarOpen }: { onToggleChat: () => void; sidebarOpen: boolean }) {
+function AppBar({
+  onToggleSocial,
+  sidebarOpen,
+}: {
+  onToggleSocial: () => void
+  sidebarOpen: boolean
+}) {
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
   const user = useAppSelector(s => s.auth.self?.user)
@@ -514,25 +524,25 @@ function AppBar({ onToggleChat, sidebarOpen }: { onToggleChat: () => void; sideb
       <MenuItems>
         <MenuItemsStart>
           <MenuItem href='/' routePattern='/'>
-            Home
+            {t('navigation.bar.home', 'Home')}
           </MenuItem>
           <MenuItem href='/games/' routePattern='/games/*?'>
-            Games
+            {t('games.activity.title', 'Games')}
           </MenuItem>
           <MenuItem href='/replays/' routePattern='/replays/*?'>
-            Replays
+            {t('replays.activity.title', 'Replays')}
           </MenuItem>
         </MenuItemsStart>
-        <PlayButton>Play</PlayButton>
+        <PlayButton>{t('navigation.bar.play', 'Play')}</PlayButton>
         <MenuItemsEnd>
           <MenuItem href='/maps/' routePattern='/maps/*?' flipped={true}>
-            Maps
+            {t('maps.activity.title', 'Maps')}
           </MenuItem>
           <MenuItem href='/ladder/' routePattern='/ladder/*?' flipped={true}>
-            Ladder
+            {t('ladder.activity.title', 'Ladder')}
           </MenuItem>
           <MenuItem href='/leagues/' routePattern='/leagues/*?' flipped={true}>
-            Leagues
+            {t('leagues.activity.title', 'Leagues')}
           </MenuItem>
         </MenuItemsEnd>
       </MenuItems>
@@ -550,14 +560,14 @@ function AppBar({ onToggleChat, sidebarOpen }: { onToggleChat: () => void; sideb
         </Tooltip>
         <NotificationsButton icon={<ShadowedIcon icon='notifications' />} />
         <Tooltip
-          text={t('navigation.bar.chat', 'Toggle chat (ALT + H)')}
+          text={t('navigation.bar.social', 'Toggle social (ALT + H)')}
           position='bottom'
           tabIndex={-1}>
           <IconButton
             ref={chatButtonRef}
             icon={<ShadowedToggleIcon icon='chat' $active={sidebarOpen} />}
-            onClick={onToggleChat}
-            testName='chat-sidebar-button'
+            onClick={onToggleSocial}
+            testName='social-sidebar-button'
           />
         </Tooltip>
       </IconButtons>
@@ -579,20 +589,36 @@ const Content = styled.div`
 
 const Sidebar = styled.div`
   grid-area: sidebar;
+
+  position: relative;
   width: 100%;
   height: calc(100% + 8px);
   margin-top: -8px;
 
-  background: red;
+  background-color: var(--theme-surface);
+  overflow-x: hidden;
+
+  &:before {
+    position: absolute;
+    width: 1px;
+    height: 100%;
+    left: 0;
+
+    content: '';
+    background-color: var(--theme-outline);
+  }
 `
 
 export function MainLayout({ children }: { children?: React.ReactNode }) {
+  // TODO(tec27): Store in localStorage per user
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const onToggleChat = useStableCallback(() => setSidebarOpen(!sidebarOpen))
+  // TODO(tec27): Place focus inside the social sidebar when it opens (maybe pick the spot to focus
+  // [e.g. channels or whispers] based on how it got opened?)
+  const onToggleSocial = useStableCallback(() => setSidebarOpen(!sidebarOpen))
 
   return (
     <Root $sidebarOpen={sidebarOpen}>
-      <AppBar onToggleChat={onToggleChat} sidebarOpen={sidebarOpen} />
+      <AppBar onToggleSocial={onToggleSocial} sidebarOpen={sidebarOpen} />
       <Content>{children}</Content>
       <Sidebar />
     </Root>
