@@ -5,21 +5,26 @@ import styled, { css } from 'styled-components'
 import { Link, useRoute } from 'wouter'
 import { Avatar } from './avatars/avatar'
 import { MaterialIcon } from './icons/material/material-icon'
-import { IconButton, useButtonHotkey } from './material/button'
+import { HotkeyProp, IconButton, useButtonHotkey } from './material/button'
 import { fastOutSlowIn } from './material/curve-constants'
 import { Tooltip } from './material/tooltip'
 import { NotificationsButton } from './notifications/activity-bar-entry'
 import { useAppDispatch, useAppSelector } from './redux-hooks'
 import { openSettings } from './settings/action-creators'
-import { useStableCallback } from './state-hooks'
+import { useMultiRef, useStableCallback } from './state-hooks'
 import { singleLine, sofiaSans } from './styles/typography'
 
+const ALT_A = { keyCode: keycode('a'), altKey: true }
+// FIXME: lobbies
 const ALT_B = { keyCode: keycode('b'), altKey: true }
+// FIXME: create lobby
 const ALT_C = { keyCode: keycode('c'), altKey: true }
 const ALT_D = { keyCode: keycode('d'), altKey: true }
+// FIXME: matchmaking (find match)
 const ALT_F = { keyCode: keycode('f'), altKey: true }
 const ALT_G = { keyCode: keycode('g'), altKey: true }
 const ALT_H = { keyCode: keycode('h'), altKey: true }
+// FIXME: join lobby
 const ALT_J = { keyCode: keycode('j'), altKey: true }
 const ALT_M = { keyCode: keycode('m'), altKey: true }
 const ALT_O = { keyCode: keycode('o'), altKey: true }
@@ -216,77 +221,80 @@ function MenuItemStrokeGradient({ id }: { id: string }) {
   )
 }
 
-function MenuItem({
-  href,
-  routePattern,
-  flipped,
-  children,
-}: {
+interface MenuItemProps {
   href: string
   routePattern: string
   flipped?: boolean
+  hotkey: HotkeyProp
   children: React.ReactNode
-}) {
-  const [isActive] = useRoute(routePattern)
-  const strokeLeftId = useId()
-  const strokeRightId = useId()
-
-  return (
-    <Link href={href} asChild={true}>
-      <MenuItemRoot $isActive={isActive}>
-        <MenuItemLeftEdge viewBox='0 0 20 64'>
-          <polygon
-            points={!flipped ? '0,0 20,0 20,64' : '0, 64, 20,64, 20,0'}
-            fill='var(--menu-item-fill)'
-          />
-        </MenuItemLeftEdge>
-        <MenuItemContent>{children}</MenuItemContent>
-        <MenuItemRightEdge viewBox='0 0 20 64'>
-          <polygon
-            points={!flipped ? '0,0 20,64 0,64' : '0,64, 20,0, 0,0'}
-            fill='var(--menu-item-fill)'
-          />
-        </MenuItemRightEdge>
-
-        {isActive ? (
-          <>
-            {/*
-            Draw outline in 3 pieces (with some overlap to prevent gaps) to allow it to
-            stretch if needed
-          */}
-            <MenuItemLeftActiveStroke viewBox='0 0 24 64'>
-              <MenuItemStrokeGradient id={strokeLeftId} />
-              <path
-                d={
-                  !flipped
-                    ? 'M1.36,1 L20.735,63 L24,63 L20.735,63 Z'
-                    : 'M20.735,1 L1.36,63 L24,63 L1.36,63 Z'
-                }
-                fill='none'
-                stroke={`url(#${strokeLeftId})`}
-                strokeWidth='2'
-              />
-            </MenuItemLeftActiveStroke>
-            <MenuItemBottomActiveStroke />
-            <MenuItemRightActiveStroke viewBox='0 0 24 64'>
-              <MenuItemStrokeGradient id={strokeRightId} />
-              <path
-                d={
-                  !flipped
-                    ? 'M3.265,1 L22.64,63 L0,63 L22.64,63 Z'
-                    : 'M22.64,1 L3.265,63 L0,63 L3.265,63 Z'
-                }
-                fill='none'
-                stroke={`url(#${strokeRightId})`}
-                strokeWidth='2'
-              />
-            </MenuItemRightActiveStroke>
-          </>
-        ) : null}
-      </MenuItemRoot>
-    </Link>
-  )
 }
+
+const MenuItem = React.forwardRef<HTMLAnchorElement, MenuItemProps>(
+  ({ href, routePattern, flipped, hotkey, children }, ref) => {
+    const [isActive] = useRoute(routePattern)
+    const strokeLeftId = useId()
+    const strokeRightId = useId()
+
+    const [linkRef, setLinkRef] = useMultiRef(ref)
+    useButtonHotkey({ ref: linkRef, hotkey })
+
+    return (
+      <Link href={href} asChild={true}>
+        <MenuItemRoot ref={setLinkRef} $isActive={isActive}>
+          <MenuItemLeftEdge viewBox='0 0 20 64'>
+            <polygon
+              points={!flipped ? '0,0 20,0 20,64' : '0, 64, 20,64, 20,0'}
+              fill='var(--menu-item-fill)'
+            />
+          </MenuItemLeftEdge>
+          <MenuItemContent>{children}</MenuItemContent>
+          <MenuItemRightEdge viewBox='0 0 20 64'>
+            <polygon
+              points={!flipped ? '0,0 20,64 0,64' : '0,64, 20,0, 0,0'}
+              fill='var(--menu-item-fill)'
+            />
+          </MenuItemRightEdge>
+
+          {isActive ? (
+            <>
+              {/*
+                Draw outline in 3 pieces (with some overlap to prevent gaps) to allow it to
+                stretch if needed
+              */}
+              <MenuItemLeftActiveStroke viewBox='0 0 24 64'>
+                <MenuItemStrokeGradient id={strokeLeftId} />
+                <path
+                  d={
+                    !flipped
+                      ? 'M1.36,1 L20.735,63 L24,63 L20.735,63 Z'
+                      : 'M20.735,1 L1.36,63 L24,63 L1.36,63 Z'
+                  }
+                  fill='none'
+                  stroke={`url(#${strokeLeftId})`}
+                  strokeWidth='2'
+                />
+              </MenuItemLeftActiveStroke>
+              <MenuItemBottomActiveStroke />
+              <MenuItemRightActiveStroke viewBox='0 0 24 64'>
+                <MenuItemStrokeGradient id={strokeRightId} />
+                <path
+                  d={
+                    !flipped
+                      ? 'M3.265,1 L22.64,63 L0,63 L22.64,63 Z'
+                      : 'M22.64,1 L3.265,63 L0,63 L3.265,63 Z'
+                  }
+                  fill='none'
+                  stroke={`url(#${strokeRightId})`}
+                  strokeWidth='2'
+                />
+              </MenuItemRightActiveStroke>
+            </>
+          ) : null}
+        </MenuItemRoot>
+      </Link>
+    )
+  },
+)
 
 const MenuItemsStart = styled.div`
   display: flex;
@@ -513,6 +521,7 @@ function AppBar({
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
   const user = useAppSelector(s => s.auth.self?.user)
+
   const settingsButtonRef = useRef<HTMLButtonElement>(null)
   useButtonHotkey({ ref: settingsButtonRef, hotkey: ALT_S })
   const chatButtonRef = useRef<HTMLButtonElement>(null)
@@ -523,25 +532,25 @@ function AppBar({
       <AvatarSpace>{user ? <Avatar user={user.name} /> : null}</AvatarSpace>
       <MenuItems>
         <MenuItemsStart>
-          <MenuItem href='/' routePattern='/'>
+          <MenuItem href='/' routePattern='/' hotkey={ALT_O}>
             {t('navigation.bar.home', 'Home')}
           </MenuItem>
-          <MenuItem href='/games/' routePattern='/games/*?'>
+          <MenuItem href='/games/' routePattern='/games/*?' hotkey={ALT_G}>
             {t('games.activity.title', 'Games')}
           </MenuItem>
-          <MenuItem href='/replays/' routePattern='/replays/*?'>
+          <MenuItem href='/replays/' routePattern='/replays/*?' hotkey={ALT_R}>
             {t('replays.activity.title', 'Replays')}
           </MenuItem>
         </MenuItemsStart>
         <PlayButton>{t('navigation.bar.play', 'Play')}</PlayButton>
         <MenuItemsEnd>
-          <MenuItem href='/maps/' routePattern='/maps/*?' flipped={true}>
+          <MenuItem href='/maps/' routePattern='/maps/*?' flipped={true} hotkey={ALT_M}>
             {t('maps.activity.title', 'Maps')}
           </MenuItem>
-          <MenuItem href='/ladder/' routePattern='/ladder/*?' flipped={true}>
+          <MenuItem href='/ladder/' routePattern='/ladder/*?' flipped={true} hotkey={ALT_D}>
             {t('ladder.activity.title', 'Ladder')}
           </MenuItem>
-          <MenuItem href='/leagues/' routePattern='/leagues/*?' flipped={true}>
+          <MenuItem href='/leagues/' routePattern='/leagues/*?' flipped={true} hotkey={ALT_A}>
             {t('leagues.activity.title', 'Leagues')}
           </MenuItem>
         </MenuItemsEnd>

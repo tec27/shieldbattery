@@ -239,7 +239,7 @@ export interface ButtonHotkeyProps {
   // any different handling on the React side, so converting them to MutableRefObjects in this case
   // seems to be safe.
   /** The reference to the button that should be pressed programmatically. */
-  ref: React.MutableRefObject<HTMLButtonElement | undefined | null>
+  ref: React.MutableRefObject<HTMLButtonElement | HTMLAnchorElement | undefined | null>
   /**
    * A hotkey, or an array of hotkeys, to register for the button. Pressing any of the specified
    * modifiers and key combinations will result in the button being clicked programmatically.
