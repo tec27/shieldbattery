@@ -13,7 +13,6 @@ import {
   ChannelPermissions,
   ChannelPreferences,
   ChatEvent,
-  ChatReadyEvent,
   ChatServiceErrorCode,
   ChatUserEvent,
   DetailedChannelInfo,
@@ -22,6 +21,7 @@ import {
   GetBatchedChannelInfosResponse,
   GetChannelHistoryServerResponse,
   GetChannelInfoResponse,
+  InitialChannelData,
   JoinChannelResponse,
   JoinedChannelInfo,
   SbChannelId,
@@ -130,6 +130,26 @@ export default class ChatService {
         )
       })
       .on('userQuit', userId => this.handleUserQuit(userId))
+  }
+
+  async getJoinedChannels(userId: SbUserId): Promise<InitialChannelData[]> {
+    const joinedChannels = await getChannelsForUser(userId)
+    const channelInfos = await getChannelInfos(joinedChannels.map(c => c.channelId))
+
+    const channelInfosMap = new global.Map(channelInfos.map(c => [c.id, c]))
+
+    return joinedChannels.map(c => {
+      const channelInfo = channelInfosMap.get(c.channelId)!
+
+      return {
+        channelInfo: toBasicChannelInfo(channelInfo),
+        detailedChannelInfo: toDetailedChannelInfo(channelInfo),
+        joinedChannelInfo: toJoinedChannelInfo(channelInfo),
+        activeUserIds: this.state.channels.get(channelInfo.id)!.toArray(),
+        selfPreferences: c.channelPreferences,
+        selfPermissions: c.channelPermissions,
+      }
+    })
   }
 
   private async updateUserAfterJoining(
@@ -1128,42 +1148,6 @@ export default class ChatService {
       userSockets.subscribe(getChannelPath(userChannel.channelId))
       userSockets.subscribe(getChannelUserPath(userChannel.channelId, userSockets.userId))
     }
-    userSockets.subscribe<ChatReadyEvent>(`${userSockets.getPath()}/chat`, async () => {
-      try {
-        // TODO(2Pac): Can read this from state once that's moved to non-immutable.js `Set` (since
-        // the current one is unordered).
-        const joinedChannels = await getChannelsForUser(userSockets.userId)
-        const joinedChannelIds = joinedChannels.map(c => c.channelId)
-        const [channelInfos, userChannelEntries] = await Promise.all([
-          getChannelInfos(joinedChannelIds),
-          getUserChannelEntriesForUser(userSockets.userId, joinedChannelIds),
-        ])
-        const channelInfosMap = new global.Map(channelInfos.map(c => [c.id, c]))
-        const userChannelEntriesMap = new global.Map(userChannelEntries.map(e => [e.channelId, e]))
-
-        return {
-          type: 'chatReady',
-          channels: joinedChannelIds.map(id => {
-            const channelInfo = channelInfosMap.get(id)!
-            const userChannelEntry = userChannelEntriesMap.get(id)!
-            return {
-              channelInfo: toBasicChannelInfo(channelInfo),
-              detailedChannelInfo: toDetailedChannelInfo(channelInfo),
-              joinedChannelInfo: toJoinedChannelInfo(channelInfo),
-              activeUserIds: this.state.channels.get(channelInfo.id)!.toArray(),
-              selfPreferences: userChannelEntry.channelPreferences,
-              selfPermissions: userChannelEntry.channelPermissions,
-            }
-          }),
-        }
-      } catch (err) {
-        logger.error({ err }, 'Error retrieving the list of ordered joined channels for the user')
-        return {
-          type: 'chatReady',
-          channels: [],
-        }
-      }
-    })
   }
 
   private handleUserQuit(userId: SbUserId) {

@@ -15,6 +15,7 @@ import {
   GetChannelHistoryServerResponse,
   GetChannelInfoResponse,
   GetChatUserProfileResponse,
+  InitialChannelData,
   SbChannelId,
   SearchChannelsResponse,
 } from '../../common/chat'
@@ -41,6 +42,7 @@ export type ChatActions =
   | GetChannelInfo
   | GetBatchChannelInfoSuccess
   | GetBatchChannelInfoFailure
+  | GetJoinedChannels
   | SearchChannels
   | ActivateChannel
   | DeactivateChannel
@@ -59,6 +61,11 @@ export type ChatActions =
   | UpdateUserOffline
   | UpdateSelfPreferences
   | UpdateSelfPermissions
+
+export interface GetJoinedChannels {
+  type: '@chat/getJoinedChannels'
+  payload: InitialChannelData[]
+}
 
 export interface JoinChannelBegin {
   type: '@chat/joinChannelBegin'

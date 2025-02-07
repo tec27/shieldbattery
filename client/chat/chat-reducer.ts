@@ -251,8 +251,8 @@ function initChannel(state: ChatState, channelId: SbChannelId, data: InitialChan
 }
 
 export default immerKeyedReducer(DEFAULT_CHAT_STATE, {
-  ['@loading/chatReady'](state, action) {
-    for (const channel of action.payload.channels) {
+  ['@chat/getJoinedChannels'](state, action) {
+    for (const channel of action.payload) {
       initChannel(state, channel.channelInfo.id, channel)
     }
   },

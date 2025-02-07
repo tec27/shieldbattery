@@ -23,12 +23,6 @@ export interface WhisperTextMessage extends BaseWhisperMessage {
 
 export type WhisperMessage = WhisperTextMessage
 
-export interface WhispersReadyEvent {
-  type: 'whispersReady'
-  /** Ordered list of target IDs that the user has session with. */
-  targetIds: SbUserId[]
-}
-
 export interface WhisperSessionInitEvent {
   action: 'initSession2'
   target: SbUser

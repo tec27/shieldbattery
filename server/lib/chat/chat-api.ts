@@ -13,6 +13,7 @@ import {
   GetChannelInfoResponse,
   GetChannelUserPermissionsResponse,
   GetChatUserProfileResponse,
+  InitialChannelData,
   JoinChannelResponse,
   ModerateChannelUserServerRequest,
   SEARCH_CHANNELS_LIMIT,
@@ -37,6 +38,12 @@ import throttleMiddleware, { throttleMiddlewareFunc } from '../throttle/middlewa
 import { validateRequest } from '../validation/joi-validator'
 import { json } from '../validation/json-validator'
 import ChatService, { ChatServiceError } from './chat-service'
+
+const getJoinedChannelsThrottle = createThrottle('chatgetjoinedchannels', {
+  rate: 10,
+  burst: 20,
+  window: 60000,
+})
 
 const joinThrottle = createThrottle('chatjoin', {
   rate: 3,
@@ -171,6 +178,12 @@ async function throttleEditChannel(ctx: ExtendableContext, next: Next) {
 @httpBeforeAll(ensureLoggedIn, convertChatServiceErrors)
 export class ChatApi {
   constructor(private chatService: ChatService) {}
+
+  @httpGet('/joined-channels')
+  @httpBefore(throttleMiddleware(getJoinedChannelsThrottle, ctx => String(ctx.session!.user!.id)))
+  async getJoinedChannels(ctx: RouterContext): Promise<InitialChannelData[]> {
+    return await this.chatService.getJoinedChannels(ctx.session!.user!.id)
+  }
 
   @httpPost('/join/:channelName')
   @httpBefore(throttleMiddleware(joinThrottle, ctx => String(ctx.session!.user!.id)))

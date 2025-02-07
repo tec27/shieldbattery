@@ -8,6 +8,15 @@ export type WhisperActions =
   | WhisperSessionInit
   | WhisperSessionClose
   | WhisperMessageUpdate
+  | GetWhisperSessions
+
+/**
+ * Get the list of whisper sessions for the current user.
+ */
+export interface GetWhisperSessions {
+  type: '@whispers/getWhisperSessions'
+  payload: SbUser[]
+}
 
 /**
  * Load the `limit` amount of messages in a whisper session before a particular time.
