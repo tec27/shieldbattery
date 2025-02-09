@@ -12,7 +12,6 @@ import {
   WhisperMessageType,
   WhisperServiceErrorCode,
   WhisperSessionInitEvent,
-  WhispersReadyEvent,
 } from '../../../common/whispers'
 import { getChannelInfos, toBasicChannelInfo } from '../chat/chat-models'
 import logger from '../logging/logger'
@@ -65,6 +64,10 @@ export default class WhisperService {
           logger.error({ err }, 'Error handling user disconnect in whisper service'),
         )
       })
+  }
+
+  async getWhisperSessions(userId: SbUserId): Promise<SbUser[]> {
+    return await getWhisperSessionsForUser(userId)
   }
 
   async startWhisperSession(userId: SbUserId, targetUser: SbUserId) {
@@ -240,16 +243,6 @@ export default class WhisperService {
     return foundUser
   }
 
-  private subscribeUserToWhisperSession(userSockets: UserSocketsGroup, target: SbUser) {
-    userSockets.subscribe<WhisperSessionInitEvent>(
-      getSessionPath(userSockets.userId, target.id),
-      () => ({
-        action: 'initSession2',
-        target,
-      }),
-    )
-  }
-
   unsubscribeUserFromWhisperSession(userId: SbUserId, targetUser: SbUserId) {
     const userSockets = this.userSocketsManager.getById(userId)
     userSockets?.unsubscribe(getSessionPath(userId, targetUser))
@@ -270,7 +263,13 @@ export default class WhisperService {
 
     if (!this.userSessions.get(user.id)?.has(target.id)) {
       this.userSessions = this.userSessions.update(user.id, OrderedSet(), s => s.add(target.id))
-      this.subscribeUserToWhisperSession(userSockets, target)
+      userSockets.subscribe<WhisperSessionInitEvent>(
+        getSessionPath(userSockets.userId, target.id),
+        () => ({
+          action: 'initSession2',
+          target,
+        }),
+      )
     }
   }
 
@@ -281,23 +280,15 @@ export default class WhisperService {
       return
     }
 
-    const targetIdsSet = OrderedSet(whisperSessions.map(s => s.targetId))
+    const targetIdsSet = OrderedSet(whisperSessions.map(s => s.id))
     this.userSessions = this.userSessions.set(userSockets.userId, targetIdsSet)
     for (const session of whisperSessions) {
       // Add the new user to all of the sessions they have opened
-      this.sessionUsers = this.sessionUsers.update(session.targetId, ISet(), s =>
+      this.sessionUsers = this.sessionUsers.update(session.id, ISet(), s =>
         s.add(userSockets.userId),
       )
-      this.subscribeUserToWhisperSession(userSockets, {
-        id: session.targetId,
-        name: session.targetName,
-      })
+      userSockets.subscribe(getSessionPath(userSockets.userId, session.id))
     }
-
-    userSockets.subscribe<WhispersReadyEvent>(`${userSockets.getPath()}/whispers`, () => ({
-      type: 'whispersReady',
-      targetIds: this.userSessions.get(userSockets.userId)?.toArray() ?? [],
-    }))
   }
 
   private async handleUserQuit(userId: SbUserId) {

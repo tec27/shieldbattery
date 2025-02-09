@@ -5,25 +5,19 @@ import db from '../db'
 import { sql } from '../db/sql'
 import { Dbify } from '../db/types'
 
-export interface WhisperSessionEntry {
-  targetId: SbUserId
-  targetName: string
-}
-
-type DbWhisperSessionEntry = Dbify<WhisperSessionEntry>
-
-export async function getWhisperSessionsForUser(userId: SbUserId): Promise<WhisperSessionEntry[]> {
+export async function getWhisperSessionsForUser(userId: SbUserId): Promise<SbUser[]> {
   const { client, done } = await db()
   try {
-    const result = await client.query<DbWhisperSessionEntry>(sql`
-      SELECT u.name AS target_name, u.id AS target_id FROM whisper_sessions
+    const result = await client.query<Dbify<SbUser>>(sql`
+      SELECT u.id AS id, u.name AS name
+      FROM whisper_sessions
       INNER JOIN users AS u ON target_user_id = u.id
       WHERE user_id = ${userId}
       ORDER BY start_date;
     `)
     return result.rows.map(row => ({
-      targetId: row.target_id,
-      targetName: row.target_name,
+      id: row.id,
+      name: row.name,
     }))
   } finally {
     done()

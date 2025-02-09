@@ -221,12 +221,6 @@ export interface InitialChannelData {
   selfPermissions: ChannelPermissions
 }
 
-export interface ChatReadyEvent {
-  type: 'chatReady'
-  /** Ordered list of channels (and their initial data) that the user is joined in. */
-  channels: InitialChannelData[]
-}
-
 export interface ChatInitEvent extends InitialChannelData {
   action: 'init3'
 }

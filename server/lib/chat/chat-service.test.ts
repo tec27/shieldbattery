@@ -423,10 +423,6 @@ describe('chat/chat-service', () => {
         user3TestChannelEntry,
       ])
       asMockedFunction(getChannelInfos).mockResolvedValue([shieldBatteryChannel, testChannel])
-      asMockedFunction(getUserChannelEntriesForUser).mockResolvedValue([
-        user3ShieldBatteryChannelEntry,
-        user3TestChannelEntry,
-      ])
 
       const client3 = connector.connectClient(user3, 'USER3_CLIENT_ID')
 
@@ -438,8 +434,6 @@ describe('chat/chat-service', () => {
       // test), so we restore the mocked return value to what it is by default, so it doesn't
       // impact the tests that run after this one.
       asMockedFunction(getChannelsForUser).mockResolvedValue([])
-      asMockedFunction(getChannelInfos).mockResolvedValue([])
-      asMockedFunction(getUserChannelEntriesForUser).mockResolvedValue([])
 
       expect(nydus.subscribeClient).toHaveBeenCalledWith(
         client3,
@@ -461,27 +455,55 @@ describe('chat/chat-service', () => {
         getChannelUserPath(testChannel.id, user3.id),
         undefined,
       )
-      expect(client3.publish).toHaveBeenCalledWith(`/users/${user3.id}/chat`, {
-        type: 'chatReady',
-        channels: [
-          {
-            channelInfo: shieldBatteryBasicInfo,
-            detailedChannelInfo: shieldBatteryDetailedInfo,
-            joinedChannelInfo: shieldBatteryJoinedInfo,
-            activeUserIds: [user3.id],
-            selfPreferences: channelPreferences,
-            selfPermissions: channelPermissions,
-          },
-          {
-            channelInfo: testBasicInfo,
-            detailedChannelInfo: testDetailedInfo,
-            joinedChannelInfo: testJoinedInfo,
-            activeUserIds: [user3.id],
-            selfPreferences: channelPreferences,
-            selfPermissions: channelPermissions,
-          },
-        ],
-      })
+    })
+  })
+
+  describe('getJoinedChannels', () => {
+    test('returns joined channels for the user', async () => {
+      await joinUserToChannel(
+        user1,
+        shieldBatteryChannel,
+        user1ShieldBatteryChannelEntry,
+        joinUser1ShieldBatteryChannelMessage,
+      )
+      await joinUserToChannel(
+        user1,
+        testChannel,
+        user1TestChannelEntry,
+        joinUser1TestChannelMessage,
+      )
+
+      asMockedFunction(getChannelsForUser).mockResolvedValue([
+        user1ShieldBatteryChannelEntry,
+        user1TestChannelEntry,
+      ])
+      asMockedFunction(getChannelInfos).mockResolvedValue([shieldBatteryChannel, testChannel])
+
+      const result = await chatService.getJoinedChannels(user1.id)
+
+      // NOTE(2Pac): This method is used every time a user connects (so basically before each
+      // test), so we restore the mocked return value to what it is by default, so it doesn't
+      // impact the tests that run after this one.
+      asMockedFunction(getChannelsForUser).mockResolvedValue([])
+
+      expect(result).toEqual([
+        {
+          channelInfo: shieldBatteryBasicInfo,
+          detailedChannelInfo: shieldBatteryDetailedInfo,
+          joinedChannelInfo: shieldBatteryJoinedInfo,
+          activeUserIds: [user1.id],
+          selfPreferences: channelPreferences,
+          selfPermissions: channelPermissions,
+        },
+        {
+          channelInfo: testBasicInfo,
+          detailedChannelInfo: testDetailedInfo,
+          joinedChannelInfo: testJoinedInfo,
+          activeUserIds: [user1.id],
+          selfPreferences: channelPreferences,
+          selfPermissions: channelPermissions,
+        },
+      ])
     })
   })
 
