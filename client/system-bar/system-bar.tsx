@@ -16,13 +16,14 @@ const Container = styled.header`
   flex-shrink: 0;
 
   width: 100%;
-  height: 24px;
+  height: 32px;
   margin: 0;
   padding: 0;
   position: relative;
 
   display: flex;
   flex-direction: row;
+
   background-color: var(--color-grey-blue30);
   overflow: hidden;
   z-index: ${zIndexAppBar};
@@ -31,6 +32,9 @@ const Container = styled.header`
 `
 
 const LeftSide = styled.div`
+  height: 100%;
+  padding: 0 2px;
+
   display: flex;
   align-items: center;
   gap: 8px;
@@ -71,7 +75,7 @@ const StyledLockup = styled(Lockup)`
 
 export function SystemBar() {
   useLayoutEffect(() => {
-    document.body.style.setProperty('--sb-system-bar-height', '24px')
+    document.body.style.setProperty('--sb-system-bar-height', '32px')
     return () => {
       document.body.style.removeProperty('--sb-system-bar-height')
     }

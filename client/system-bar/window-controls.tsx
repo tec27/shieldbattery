@@ -13,7 +13,7 @@ import { zIndexWindowControls } from '../material/zindex'
 
 const ipcRenderer = new TypedIpcRenderer()
 
-export const windowControlsHeight = IS_ELECTRON ? '24px' : '0px'
+export const windowControlsHeight = IS_ELECTRON ? '32px' : '0px'
 
 export const WindowControlsStyle = createGlobalStyle`
   .sb-window-controls {
