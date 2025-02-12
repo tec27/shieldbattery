@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 import swallowNonBuiltins from '../../common/async/swallow-non-builtins'
 import { TypedIpcRenderer } from '../../common/ipc'
-import { closeOverlay } from '../activities/action-creators'
 import { FileBrowser } from '../file-browser/file-browser'
 import {
   ExpansionPanelProps,
@@ -52,7 +51,6 @@ export function BrowseLocalReplays() {
 
   const onStartReplay = useCallback(
     (replay: FileBrowserFileEntry) => {
-      dispatch(closeOverlay() as any)
       dispatch(startReplay(replay))
     },
     [dispatch],

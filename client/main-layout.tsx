@@ -12,7 +12,7 @@ import { NotificationsButton } from './notifications/activity-bar-entry'
 import { useAppDispatch, useAppSelector } from './redux-hooks'
 import { openSettings } from './settings/action-creators'
 import { useMultiRef, useStableCallback } from './state-hooks'
-import { singleLine, sofiaSans } from './styles/typography'
+import { caption, singleLine, sofiaSans } from './styles/typography'
 
 const ALT_A = { keyCode: keycode('a'), altKey: true }
 // FIXME: lobbies
@@ -631,6 +631,30 @@ export function MainLayout({ children }: { children?: React.ReactNode }) {
       <AppBar onToggleSocial={onToggleSocial} sidebarOpen={sidebarOpen} />
       <Content>{children}</Content>
       <Sidebar />
+      <VersionText />
     </Root>
   )
+}
+
+const VersionTextRoot = styled.div`
+  ${caption};
+
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  padding: 4px;
+
+  pointer-events: none;
+
+  background-color: rgb(from var(--theme-surface) r g b / 40%);
+  border-radius: 0 2px 0 0;
+  color: var(--theme-on-surface-variant);
+  letter-spacing: 1.25px;
+  line-height: 1;
+`
+
+const CUR_VERSION = __WEBPACK_ENV.VERSION
+
+export function VersionText() {
+  return <VersionTextRoot>v{CUR_VERSION}</VersionTextRoot>
 }

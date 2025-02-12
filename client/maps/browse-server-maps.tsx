@@ -13,7 +13,6 @@ import {
   Tileset,
 } from '../../common/maps'
 import { SbUserId } from '../../common/users/sb-user'
-import { ActivityBackButton } from '../activities/activity-back-button'
 import InfiniteScrollList from '../lists/infinite-scroll-list'
 import ImageList from '../material/image-list'
 import { TabItem, Tabs } from '../material/tabs'
@@ -413,10 +412,10 @@ export function BrowseServerMaps({
 
   const hasMoreMaps = mapsState.total === -1 || mapsState.total > mapsState.byId.size
 
+  // FIXME: Add back button if needed
   return (
     <Container>
       <TitleBar>
-        <ActivityBackButton />
         <Headline5>{title}</Headline5>
       </TitleBar>
       <TabArea>

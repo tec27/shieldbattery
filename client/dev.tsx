@@ -1,7 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Link, Route, Switch } from 'wouter'
-import DevActivities from './activities/devonly/routes'
 import { DevDownload } from './download/devonly/routes'
 import { DevLadder } from './ladder/devonly/routes'
 import DevLists from './lists/devonly/routes'
@@ -73,7 +72,6 @@ export default function Dev() {
       </HomeLink>
       <Content>
         <Switch>
-          <Route path='/dev/activities/*?' component={DevActivities} />
           <Route path='/dev/download/*?' component={DevDownload} />
           <Route path='/dev/ladder/*?' component={DevLadder} />
           <Route path='/dev/lists/*?' component={DevLists} />

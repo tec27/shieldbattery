@@ -1,6 +1,5 @@
 export { default as activeGame } from './active-game/active-game-reducer'
 export { default as gameClient } from './active-game/game-client-reducer'
-export { default as activityOverlay } from './activities/activity-overlay-reducer'
 export { default as adminMapPools } from './admin/map-pools-reducer'
 export { default as matchmakingTimes } from './admin/matchmaking-times-reducer'
 export { default as auth } from './auth/auth-reducer'

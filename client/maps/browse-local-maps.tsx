@@ -5,7 +5,6 @@ import { ReadonlyDeep } from 'type-fest'
 import swallowNonBuiltins from '../../common/async/swallow-non-builtins'
 import { TypedIpcRenderer } from '../../common/ipc'
 import { MapInfoJson } from '../../common/maps'
-import { ActivityBackButton } from '../activities/activity-back-button'
 import { FileBrowser } from '../file-browser/file-browser'
 import {
   FileBrowserFileEntry,
@@ -101,11 +100,11 @@ export function BrowseLocalMaps(props: { onMapSelect: (map: ReadonlyDeep<MapInfo
     )
   }
 
+  // FIXME: add back button if needed (always?)
   return (
     <FileBrowser
       browserType={FileBrowserType.Maps}
       title={t('maps.local.title', 'Local Maps')}
-      titleButton={<ActivityBackButton />}
       rootFolders={rootFolders}
       fileEntryConfig={fileEntryConfig}
     />
