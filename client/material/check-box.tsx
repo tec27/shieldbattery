@@ -11,7 +11,7 @@ import {
   colorTextPrimary,
   colorTextSecondary,
 } from '../styles/colors'
-import { fastOutSlowIn } from './curve-constants'
+import { standardEasing } from './curve-constants'
 
 const BOX_WIDTH = 18
 const BOX_HEIGHT = 18
@@ -86,7 +86,7 @@ export const CheckIconContainer = styled.div<{
     border-radius: 50%;
     content: '';
     transition:
-      all 200ms ${fastOutSlowIn},
+      all 200ms ${standardEasing},
       background-color 150ms linear;
   }
 
@@ -155,7 +155,7 @@ export const CheckIcon = styled.div<{
     transform: ${props => (props.$checked ? 'rotate(45deg)' : 'rotate(-135deg)')};
     transition:
       border-color 150ms linear,
-      transform 200ms ${fastOutSlowIn};
+      transform 200ms ${standardEasing};
   }
 `
 

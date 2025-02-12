@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { amberA400, colorTextFaint, colorTextPrimary, colorTextSecondary } from '../styles/colors'
 import { body1, overline } from '../styles/typography'
 import { useButtonState } from './button'
-import { fastOutSlowIn } from './curve-constants'
+import { standardEasing } from './curve-constants'
 import { Ripple } from './ripple'
 
 const noop = () => {}
@@ -153,7 +153,7 @@ const RadioIcon = styled.div<{ $selected?: boolean }>`
     background-color: currentColor;
 
     transform: ${props => (props.$selected ? 'scale(1)' : 'scale(0)')};
-    transition: transform 150ms ${fastOutSlowIn};
+    transition: transform 150ms ${standardEasing};
   }
 `
 

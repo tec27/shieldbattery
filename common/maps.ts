@@ -7,7 +7,7 @@ import { RaceChar } from './races'
 
 export enum Tileset {
   // NOTE(tec27): These are ordered to match their int values ingame
-  Badlands,
+  Badlands = 0,
   Platform,
   Installation,
   Ashworld,
@@ -17,7 +17,16 @@ export enum Tileset {
   Twilight,
 }
 
-export const ALL_TILESETS: Readonly<number[]> = [0, 1, 2, 3, 4, 5, 6, 7]
+export const ALL_TILESETS: ReadonlyArray<Tileset> = [
+  Tileset.Badlands,
+  Tileset.Platform,
+  Tileset.Installation,
+  Tileset.Ashworld,
+  Tileset.Jungle,
+  Tileset.Desert,
+  Tileset.Ice,
+  Tileset.Twilight,
+]
 
 export function tilesetToName(tileset: Tileset, t: TFunction) {
   switch (tileset) {

@@ -8,7 +8,7 @@ import React, {
 } from 'react'
 import styled, { css, keyframes } from 'styled-components'
 import { useForceUpdate, usePrevious, useValueAsRef } from '../state-hooks'
-import { fastOutSlowIn } from './curve-constants'
+import { standardEasing } from './curve-constants'
 
 const RIPPLE_PADDING = 8
 const INITIAL_ORIGIN_SCALE = 0.1
@@ -22,7 +22,7 @@ const FG_DEACTIVATION_MS = OPACITY_OUT_DURATION_MS
 
 const fgRadiusIn = keyframes`
   from {
-    animation-timing-function: ${fastOutSlowIn};
+    animation-timing-function: ${standardEasing};
     transform: translate(var(--sb-ripple-translate-start, 0)) scale(1);
   }
 

@@ -697,7 +697,8 @@
           "small": "Small"
         },
         "title": "Thumbnail size"
-      }
+      },
+      "uploadedMap": "Uploaded map"
     },
     "thumbnail": {
       "addToFavorites": "Add to favorites",

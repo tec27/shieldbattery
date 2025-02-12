@@ -5,7 +5,7 @@ import styled from 'styled-components'
 import WindowListener from '../dom/window-listener'
 import { MaterialIcon } from '../icons/material/material-icon'
 import { IconButton, Label } from '../material/button'
-import { fastOutSlowIn } from '../material/curve-constants'
+import { standardEasing } from '../material/curve-constants'
 import { colorTextSecondary } from '../styles/colors'
 import InfiniteScrollList from './infinite-scroll-list'
 
@@ -44,7 +44,7 @@ const CarouselContentMask = styled.div`
 const CarouselContent = styled.div`
   display: flex;
   flex-shrink: 0;
-  transition: transform 250ms ${fastOutSlowIn};
+  transition: transform 250ms ${standardEasing};
 `
 
 const CarouselButton = styled(IconButton)`

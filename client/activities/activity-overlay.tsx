@@ -5,7 +5,7 @@ import styled from 'styled-components'
 import { assertUnreachable } from '../../common/assert-unreachable'
 import { FocusTrap } from '../dom/focus-trap'
 import { KeyListenerBoundary, useKeyListener } from '../keyboard/key-listener'
-import { fastOutLinearIn, linearOutSlowIn } from '../material/curve-constants'
+import { accelerateEasing, decelerateEasing } from '../material/curve-constants'
 import { isHandledDismissalEvent } from '../material/dismissal-events'
 import { shadow8dp } from '../material/shadows'
 import { zIndexBackdrop, zIndexSideNav } from '../material/zindex'
@@ -83,7 +83,7 @@ const Container = styled.div`
     transform: translate3d(0, 0, 0);
     /* transition rule should always be put in the active class as there's a bug that can happen
     if it's not; see this issue: https://github.com/reactjs/react-transition-group/issues/10 */
-    transition: transform 350ms ${linearOutSlowIn};
+    transition: transform 350ms ${decelerateEasing};
   }
 
   &.enterActive ${Scrim} {
@@ -105,7 +105,7 @@ const Container = styled.div`
 
   &.exitActive ${Overlay} {
     transform: translate3d(100%, 0, 0);
-    transition: transform 250ms ${fastOutLinearIn};
+    transition: transform 250ms ${accelerateEasing};
   }
 
   &.exitActive ${Scrim} {

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
+import { ReadonlyDeep } from 'type-fest'
 import swallowNonBuiltins from '../../common/async/swallow-non-builtins'
 import { TypedIpcRenderer } from '../../common/ipc'
 import { MapInfoJson } from '../../common/maps'
@@ -32,7 +33,7 @@ async function getDocumentsMapsPath() {
   return [await ipcRenderer.invoke('pathsGetDocumentsPath'), 'Starcraft', 'maps'].join('\\')
 }
 
-export function BrowseLocalMaps(props: { onMapSelect: (map: MapInfoJson) => void }) {
+export function BrowseLocalMaps(props: { onMapSelect: (map: ReadonlyDeep<MapInfoJson>) => void }) {
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
   const lastUploadError = useAppSelector(s => s.localMaps.lastError)

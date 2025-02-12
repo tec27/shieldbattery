@@ -1,4 +1,4 @@
-import { Immutable } from 'immer'
+import { ReadonlyDeep } from 'type-fest'
 import {
   GetBatchMapInfoResponse,
   GetMapDetailsResponse,
@@ -7,6 +7,7 @@ import {
   MapPreferences,
   MapSortType,
   MapVisibility,
+  NumPlayers,
   Tileset,
   UpdateMapResponse,
   UpdateMapServerRequest,
@@ -77,21 +78,23 @@ export interface UploadLocalMapFailure extends BaseFetchFailure<'@maps/uploadLoc
   }
 }
 
+export interface GetMapsListParams {
+  visibility: MapVisibility
+  limit: number
+  page: number
+  sort: MapSortType
+  numPlayers: NumPlayers[]
+  tileset: Tileset[]
+  searchQuery: string
+}
+
 /**
  * A request is being made to the server to retrieve the list of maps with a particular visibility
  * and other filters.
  */
 export interface GetMapsBegin {
   type: '@maps/getMapsBegin'
-  payload: {
-    visibility: MapVisibility
-    limit: number
-    page: number
-    sort: MapSortType
-    numPlayers: number
-    tileset: Tileset
-    searchQuery: string
-  }
+  payload: GetMapsListParams
 }
 
 /**
@@ -101,30 +104,14 @@ export interface GetMapsSuccess {
   type: '@maps/getMaps'
   payload: GetMapsResponse
   error?: false
-  meta: {
-    visibility: MapVisibility
-    limit: number
-    page: number
-    sort: MapSortType
-    numPlayers: number
-    tileset: Tileset
-    searchQuery: string
-  }
+  meta: GetMapsListParams
 }
 
 /**
  * A request to get the list of maps has failed.
  */
 export interface GetMapsFailure extends BaseFetchFailure<'@maps/getMaps'> {
-  meta: {
-    visibility: MapVisibility
-    limit: number
-    page: number
-    sort: MapSortType
-    numPlayers: number
-    tileset: Tileset
-    searchQuery: string
-  }
+  meta: GetMapsListParams
 }
 
 /**
@@ -144,10 +131,7 @@ export type GetBatchMapInfoFailure = BaseFetchFailure<'@maps/getBatchMapInfo'>
 export interface ToggleFavoriteMapBegin {
   type: '@maps/toggleFavoriteBegin'
   payload: {
-    map: MapInfoJson
-    // TODO(2Pac): Do this differently.
-    /** An object indicating further context of the request, e.g. where it was made from. */
-    context: Record<string, unknown>
+    map: ReadonlyDeep<MapInfoJson>
   }
 }
 
@@ -160,8 +144,7 @@ export interface ToggleFavoriteMapSuccess {
   payload: void
   error?: false
   meta: {
-    map: MapInfoJson
-    context: Record<string, unknown>
+    map: ReadonlyDeep<MapInfoJson>
   }
 }
 
@@ -170,8 +153,7 @@ export interface ToggleFavoriteMapSuccess {
  */
 export interface ToggleFavoriteMapFailure extends BaseFetchFailure<'@maps/toggleFavorite'> {
   meta: {
-    map: MapInfoJson
-    context: Record<string, unknown>
+    map: ReadonlyDeep<MapInfoJson>
   }
 }
 
@@ -182,7 +164,7 @@ export interface ToggleFavoriteMapFailure extends BaseFetchFailure<'@maps/toggle
 export interface RemoveMapBegin {
   type: '@maps/removeMapBegin'
   payload: {
-    map: Immutable<MapInfoJson>
+    map: ReadonlyDeep<MapInfoJson>
   }
 }
 
@@ -194,7 +176,7 @@ export interface RemoveMapSuccess {
   payload: void
   error?: false
   meta: {
-    map: Immutable<MapInfoJson>
+    map: ReadonlyDeep<MapInfoJson>
   }
 }
 
@@ -203,7 +185,7 @@ export interface RemoveMapSuccess {
  */
 export interface RemoveMapFailure extends BaseFetchFailure<'@maps/removeMap'> {
   meta: {
-    map: Immutable<MapInfoJson>
+    map: ReadonlyDeep<MapInfoJson>
   }
 }
 
@@ -213,7 +195,7 @@ export interface RemoveMapFailure extends BaseFetchFailure<'@maps/removeMap'> {
 export interface RegenMapImageBegin {
   type: '@maps/regenMapImageBegin'
   payload: {
-    map: Immutable<MapInfoJson>
+    map: ReadonlyDeep<MapInfoJson>
   }
 }
 
@@ -225,7 +207,7 @@ export interface RegenMapImageSuccess {
   payload: void
   error?: false
   meta: {
-    map: Immutable<MapInfoJson>
+    map: ReadonlyDeep<MapInfoJson>
   }
 }
 
@@ -234,7 +216,7 @@ export interface RegenMapImageSuccess {
  */
 export interface RegenMapImageFailure extends BaseFetchFailure<'@maps/regenMapImage'> {
   meta: {
-    map: Immutable<MapInfoJson>
+    map: ReadonlyDeep<MapInfoJson>
   }
 }
 

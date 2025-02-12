@@ -6,7 +6,7 @@ import { useKeyListener } from '../../keyboard/key-listener'
 import { useValueAsRef } from '../../state-hooks'
 import { amberA400, background300, colorTextFaint, colorTextPrimary } from '../../styles/colors'
 import { buttonReset } from '../button-reset'
-import { fastOutSlowIn } from '../curve-constants'
+import { standardEasing } from '../curve-constants'
 import { InputBase } from '../input-base'
 import { InputError } from '../input-error'
 import { FloatingLabel } from '../input-floating-label'
@@ -77,7 +77,7 @@ const Icon = styled.span<{
   margin-left: 4px;
   pointer-events: none;
   transform: translate3d(0, -50%, 0) ${props => (props.$opened ? 'rotate(180deg)' : '')};
-  transition: transform 150ms ${fastOutSlowIn};
+  transition: transform 150ms ${standardEasing};
 
   & > svg {
     width: 24px;

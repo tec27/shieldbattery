@@ -1,4 +1,5 @@
 import { Immutable } from 'immer'
+import { ReadonlyDeep } from 'type-fest'
 import { getErrorStack } from '../../common/errors'
 import {
   GetBatchMapInfoResponse,
@@ -6,9 +7,6 @@ import {
   GetMapsResponse,
   MapInfoJson,
   MapPreferences,
-  MapSortType,
-  MapVisibility,
-  Tileset,
   UpdateMapResponse,
   UpdateMapServerRequest,
   UploadMapResponse,
@@ -22,7 +20,7 @@ import logger from '../logging/logger'
 import { MicrotaskBatchRequester } from '../network/batch-requests'
 import { fetchJson } from '../network/fetch'
 import { openSnackbar } from '../snackbars/action-creators'
-import { ClearMaps } from './actions'
+import { ClearMaps, GetMapsListParams } from './actions'
 import { upload } from './upload'
 
 async function uploadMap(filePath: string) {
@@ -66,16 +64,6 @@ export function uploadLocalMap(path: string, onMapSelect: (map: MapInfoJson) => 
   }
 }
 
-interface GetMapsListParams {
-  visibility: MapVisibility
-  limit: number
-  page: number
-  sort: MapSortType
-  numPlayers: number
-  tileset: Tileset
-  searchQuery: string
-}
-
 export function getMapsList(params: GetMapsListParams): ThunkAction {
   return dispatch => {
     const { visibility, limit, page, sort, numPlayers, tileset, searchQuery } = params
@@ -97,12 +85,9 @@ export function getMapsList(params: GetMapsListParams): ThunkAction {
   }
 }
 
-export function toggleFavoriteMap(
-  map: MapInfoJson,
-  context: Record<string, unknown> = {},
-): ThunkAction {
+export function toggleFavoriteMap(map: ReadonlyDeep<MapInfoJson>): ThunkAction {
   return dispatch => {
-    const params = { map, context }
+    const params = { map }
 
     dispatch({
       type: '@maps/toggleFavoriteBegin',

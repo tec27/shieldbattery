@@ -2,7 +2,7 @@ import { Set } from 'immutable'
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
-import { ALL_TILESETS, tilesetToName } from '../../common/maps'
+import { ALL_TILESETS, NumPlayers, Tileset, tilesetToName } from '../../common/maps'
 import { MaterialIcon } from '../icons/material/material-icon'
 import { useKeyListener } from '../keyboard/key-listener'
 import { IconButton, TextButton } from '../material/button'
@@ -96,14 +96,14 @@ const FilterActions = styled.div`
 export interface BrowserFooterProps {
   thumbnailSize: number
   sortOption: number
-  numPlayersFilter: Set<number>
-  tilesetFilter: Set<number>
+  numPlayersFilter: Set<NumPlayers>
+  tilesetFilter: Set<Tileset>
   searchQuery: string
-  onBrowseLocalMaps: () => void
   onSizeChange: (index: number) => void
-  onFilterApply: (numPlayersFilter: Set<number>, tilesetFilter: Set<number>) => void
+  onFilterApply: (numPlayersFilter: Set<NumPlayers>, tilesetFilter: Set<Tileset>) => void
   onSortChange: (index: number) => void
   onSearchChange: (value: string) => void
+  onBrowseLocalMaps?: () => void
 }
 
 export const BrowserFooter = React.memo((props: BrowserFooterProps) => {
@@ -139,12 +139,12 @@ export const BrowserFooter = React.memo((props: BrowserFooterProps) => {
     },
     [closeSortMenu, onSortChange],
   )
-  const onNumPlayersFilterChange = useCallback((numPlayers: number) => {
+  const onNumPlayersFilterChange = useCallback((numPlayers: NumPlayers) => {
     setTempNumPlayersFilter(value =>
       value.has(numPlayers) ? value.delete(numPlayers) : value.add(numPlayers),
     )
   }, [])
-  const onTilesetFilterChange = useCallback((tilesetId: number) => {
+  const onTilesetFilterChange = useCallback((tilesetId: Tileset) => {
     setTempTilesetFilter(value =>
       value.has(tilesetId) ? value.delete(tilesetId) : value.add(tilesetId),
     )
@@ -162,7 +162,7 @@ export const BrowserFooter = React.memo((props: BrowserFooterProps) => {
   }, [onFilterApply, tempNumPlayersFilter, tempTilesetFilter, closeFilterOverlay])
 
   const numPlayersItems = useMemo(() => {
-    const values: Array<[n: number, label: string]> = [
+    const values: Array<[n: NumPlayers, label: string]> = [
       [2, '2 players'],
       [3, '3 players'],
       [4, '4 players'],
@@ -194,11 +194,13 @@ export const BrowserFooter = React.memo((props: BrowserFooterProps) => {
 
   return (
     <Container>
-      <PositionedFloatingActionButton
-        title={t('maps.server.browseLocal', 'Browse local maps')}
-        icon={<MaterialIcon icon='folder' invertColor={true} filled={false} />}
-        onClick={props.onBrowseLocalMaps}
-      />
+      {props.onBrowseLocalMaps ? (
+        <PositionedFloatingActionButton
+          title={t('maps.server.browseLocal', 'Browse local maps')}
+          icon={<MaterialIcon icon='folder' invertColor={true} filled={false} />}
+          onClick={props.onBrowseLocalMaps}
+        />
+      ) : undefined}
       <LeftActions>
         <ActionButton
           ref={sizeRef}

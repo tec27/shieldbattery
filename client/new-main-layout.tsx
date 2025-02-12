@@ -6,7 +6,7 @@ import { Link, useRoute } from 'wouter'
 import { Avatar } from './avatars/avatar'
 import { MaterialIcon } from './icons/material/material-icon'
 import { HotkeyProp, IconButton, useButtonHotkey } from './material/button'
-import { fastOutSlowIn } from './material/curve-constants'
+import { emphasizedAccelerateEasing, emphasizedDecelerateEasing } from './material/curve-constants'
 import { Tooltip } from './material/tooltip'
 import { NotificationsButton } from './notifications/activity-bar-entry'
 import { useAppDispatch, useAppSelector } from './redux-hooks'
@@ -44,7 +44,8 @@ const Root = styled.div<{ $sidebarOpen?: boolean }>`
     'content sidebar';
   grid-template-rows: auto 1fr;
 
-  transition: grid-template-columns 250ms ${fastOutSlowIn};
+  transition: grid-template-columns ${props => (props.$sidebarOpen ? '400ms' : '200ms')}
+    ${props => (props.$sidebarOpen ? emphasizedDecelerateEasing : emphasizedAccelerateEasing)};
 `
 
 const AppBarRoot = styled.div`

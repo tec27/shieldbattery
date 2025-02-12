@@ -28,7 +28,8 @@ export default function (router) {
 }
 
 async function upsertPreferences(ctx, next) {
-  const { visibility, thumbnailSize, sortOption, numPlayers, tileset } = ctx.request.body
+  const { visibility, thumbnailSize, sortOption, numPlayersFilter, tilesetFilter } =
+    ctx.request.body
 
   if (!ALL_MAP_VISIBILITIES.includes(visibility)) {
     throw new httpErrors.BadRequest('Invalid map visibility: ' + visibility)
@@ -42,12 +43,12 @@ async function upsertPreferences(ctx, next) {
     throw new httpErrors.BadRequest('Invalid sort order option: ' + sortOption)
   }
 
-  if (!Array.isArray(numPlayers) || numPlayers.some(n => n < 2 || n > 8)) {
-    throw new httpErrors.BadRequest('Invalid filter for number of players: ' + numPlayers)
+  if (!Array.isArray(numPlayersFilter) || numPlayersFilter.some(n => n < 2 || n > 8)) {
+    throw new httpErrors.BadRequest('Invalid filter for number of players: ' + numPlayersFilter)
   }
 
-  if (!Array.isArray(tileset) || tileset.some(n => n < 0 || n > 7)) {
-    throw new httpErrors.BadRequest('Invalid filter for tileset: ' + tileset)
+  if (!Array.isArray(tilesetFilter) || tilesetFilter.some(n => n < 0 || n > 7)) {
+    throw new httpErrors.BadRequest('Invalid filter for tileset: ' + tilesetFilter)
   }
 
   ctx.body = await upsertMapPreferences(
@@ -55,8 +56,8 @@ async function upsertPreferences(ctx, next) {
     visibility,
     thumbnailSize,
     sortOption,
-    numPlayers,
-    tileset,
+    numPlayersFilter,
+    tilesetFilter,
   )
 }
 

@@ -13,6 +13,7 @@ import { LadderRouteComponent } from './ladder/ladder'
 import { Faq } from './landing/faq'
 import { LeagueRoot } from './leagues/league-list'
 import { LobbyView } from './lobbies/view'
+import { MapsRoot } from './maps/maps-root'
 import MatchmakingView from './matchmaking/view'
 import { LoginRoute } from './navigation/custom-routes'
 import {
@@ -21,6 +22,7 @@ import {
   TermsOfServicePage,
 } from './policies/policy-displays'
 import DotsIndicator from './progress/dots'
+import { ReplaysRoot } from './replays/replays-root'
 import { ProfileRouteComponent } from './users/route'
 import { WhisperRouteComponent } from './whispers/route'
 
@@ -56,8 +58,10 @@ export function AppRoutes() {
       <Route path='/games/*?' component={GamesRouteComponent} />
       <Route path='/ladder/*?' component={LadderRouteComponent} />
       <Route path='/leagues/*?' component={LeagueRoot} />
+      <Route path='/maps/*?' component={MapsRoot} />
       {IS_ELECTRON ? <Route path='/lobbies/:lobby/*?' component={LobbyView} /> : <></>}
       {IS_ELECTRON ? <Route path='/matchmaking/*?' component={MatchmakingView} /> : <></>}
+      <Route path='/replays/*?' component={ReplaysRoot} />
       <Route path='/users/*?' component={ProfileRouteComponent} />
       <Route path='/whispers/*?' component={WhisperRouteComponent} />
       <Route component={Home} />

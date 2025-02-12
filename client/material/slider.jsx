@@ -6,7 +6,7 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import styled from 'styled-components'
 import { amberA400, colorTextFaint, colorTextSecondary } from '../styles/colors'
 import { body1, caption } from '../styles/typography'
-import { fastOutSlowIn } from './curve-constants'
+import { standardEasing } from './curve-constants'
 
 const transitionNames = {
   enter: 'enter',
@@ -120,7 +120,7 @@ const FilledTrack = styled.div`
 
   transform: scaleX(1);
   transform-origin: 0% 50%;
-  transition: transform 150ms ${fastOutSlowIn};
+  transition: transform 150ms ${standardEasing};
   will-change: transform;
 `
 
@@ -178,7 +178,7 @@ const ThumbContainer = styled.div`
   width: 100%;
   pointer-events: none;
   will-change: transform;
-  transition: transform 150ms ${fastOutSlowIn};
+  transition: transform 150ms ${standardEasing};
 `
 
 const Thumb = styled.div`
@@ -223,7 +223,7 @@ const Balloon = styled.div`
   text-align: center;
   transform-origin: 50% 150%;
   transition:
-    transform 150ms ${fastOutSlowIn},
+    transform 150ms ${standardEasing},
     background-color 200ms linear,
     color 200ms linear;
   will-change: transform, background-color, color;

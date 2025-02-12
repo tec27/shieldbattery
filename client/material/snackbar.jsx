@@ -3,7 +3,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { background700 } from '../styles/colors'
 import { TextButton } from './button'
-import { fastOutLinearIn, fastOutSlowIn, linearOutSlowIn } from './curve-constants'
+import { accelerateEasing, decelerateEasing, standardEasing } from './curve-constants'
 import { shadow6dp } from './shadows'
 import { zIndexSnackbar } from './zindex'
 
@@ -34,7 +34,7 @@ const Container = styled.div`
   }
 
   &.enterActive {
-    transition: transform 350ms ${linearOutSlowIn};
+    transition: transform 350ms ${decelerateEasing};
     transform: translate3d(0, 0, 0);
   }
 
@@ -44,7 +44,7 @@ const Container = styled.div`
   }
 
   &.exitActive {
-    transition: transform 250ms ${fastOutLinearIn};
+    transition: transform 250ms ${accelerateEasing};
     transform: translate3d(0, 100%, 0);
   }
 
@@ -54,7 +54,7 @@ const Container = styled.div`
 
   &.enterActive ${MessageContainer}, &.enterActive ${ActionButton} {
     opacity: 1;
-    transition: opacity 450ms ${fastOutSlowIn} 50ms;
+    transition: opacity 450ms ${standardEasing} 50ms;
   }
 `
 
