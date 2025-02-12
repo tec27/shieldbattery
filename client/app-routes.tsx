@@ -7,14 +7,13 @@ import { Login } from './auth/login'
 import { Signup } from './auth/signup'
 import { ChannelRouteComponent } from './chat/route'
 import { DownloadPage } from './download/download-page'
+import { PlayRoot } from './gameplay-activity/play-root'
 import { GamesRouteComponent } from './games/route'
 import { Home } from './home'
 import { LadderRouteComponent } from './ladder/ladder'
 import { Faq } from './landing/faq'
 import { LeagueRoot } from './leagues/league-list'
-import { LobbyView } from './lobbies/view'
 import { MapsRoot } from './maps/maps-root'
-import MatchmakingView from './matchmaking/view'
 import { LoginRoute } from './navigation/custom-routes'
 import {
   AcceptableUsePage,
@@ -27,6 +26,10 @@ import { ProfileRouteComponent } from './users/route'
 import { WhisperRouteComponent } from './whispers/route'
 
 const AdminPanelComponent = React.lazy(() => import('./admin/panel'))
+const LobbyView = React.lazy(async () => ({
+  default: (await import('./lobbies/view')).LobbyView,
+}))
+const MatchmakingView = React.lazy(() => import('./matchmaking/view'))
 
 function LoadableAdminPanel() {
   // TODO(tec27): do we need to position this indicator differently? (or pull that into a common
@@ -58,9 +61,10 @@ export function AppRoutes() {
       <Route path='/games/*?' component={GamesRouteComponent} />
       <Route path='/ladder/*?' component={LadderRouteComponent} />
       <Route path='/leagues/*?' component={LeagueRoot} />
-      <Route path='/maps/*?' component={MapsRoot} />
       {IS_ELECTRON ? <Route path='/lobbies/:lobby/*?' component={LobbyView} /> : <></>}
+      <Route path='/maps/*?' component={MapsRoot} />
       {IS_ELECTRON ? <Route path='/matchmaking/*?' component={MatchmakingView} /> : <></>}
+      <Route path='/play/*?' component={PlayRoot} />
       <Route path='/replays/*?' component={ReplaysRoot} />
       <Route path='/users/*?' component={ProfileRouteComponent} />
       <Route path='/whispers/*?' component={WhisperRouteComponent} />
