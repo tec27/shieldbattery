@@ -158,13 +158,14 @@ function model1v1FastestToPrefs(model: Model1v1Fastest, userId: SbUserId, mapPoo
 export function Contents1v1Fastest({ formRef, onSubmit, disabled }: FindMatchContentsProps) {
   const dispatch = useAppDispatch()
   const selfUser = useSelfUser()!
-  const prefs: Immutable<MatchmakingPreferences1v1Fastest> | Record<string, never> = useAppSelector(
-    s =>
-      (s.matchmakingPreferences.byType.get(MatchmakingType.Match1v1Fastest)?.preferences as
-        | Immutable<MatchmakingPreferences1v1Fastest>
-        | Record<string, never>
-        | undefined) ?? {},
-  )
+  const prefs: Immutable<MatchmakingPreferences1v1Fastest> | Record<string, never> =
+    useAppSelector(
+      s =>
+        s.matchmakingPreferences.byType.get(MatchmakingType.Match1v1Fastest)?.preferences as
+          | Immutable<MatchmakingPreferences1v1Fastest>
+          | Record<string, never>
+          | undefined,
+    ) ?? {}
   const mapPoolOutdated = useAppSelector(
     s =>
       s.matchmakingPreferences.byType.get(MatchmakingType.Match1v1Fastest)?.mapPoolOutdated ??

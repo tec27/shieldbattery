@@ -4,7 +4,6 @@ import { withTranslation } from 'react-i18next'
 import { connect } from 'react-redux'
 import styled from 'styled-components'
 import { gameTypeToLabel } from '../../common/games/configuration'
-import { closeOverlay } from '../activities/action-creators'
 import { MaterialIcon } from '../icons/material/material-icon'
 import { MapThumbnail } from '../maps/map-thumbnail'
 import { RaisedButton } from '../material/button'
@@ -95,7 +94,6 @@ class ListEntry extends React.Component {
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
 `
 
 const TitleBar = styled.div`

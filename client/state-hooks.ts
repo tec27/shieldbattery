@@ -1,5 +1,8 @@
 import { freeze, produce, Producer } from 'immer'
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { getErrorStack } from '../common/errors'
+import { useSelfUser } from './auth/auth-utils'
+import logger from './logging/logger'
 
 /**
  * A hook to access the previous value of some variable inside a functional component.
@@ -141,4 +144,57 @@ export function useImmerState<T>(initialState: T): [T, (updater: Producer<T> | T
       }
     }, []),
   ]
+}
+
+function loadAndParseLocalStorage<T>(key: string): T | undefined {
+  const valueJson = localStorage.getItem(key)
+  if (valueJson === null) {
+    return undefined
+  }
+
+  try {
+    return JSON.parse(valueJson)
+  } catch (err) {
+    logger.error(`error parsing value for ${key}: ${getErrorStack(err)}`)
+    return undefined
+  }
+}
+
+/**
+ * Hook that is similar to `useState` but the value is stored in `LocalStorage`, keyed by user ID.
+ * T must be serializable to JSON. Parsing failures will be logged and act as if the value is unset.
+ */
+export function useUserLocalStorageValue<T>(
+  key: string,
+): [value: T | undefined, storeValue: (value: T | undefined) => void] {
+  const currentUser = useSelfUser()?.id ?? 0
+  const userKey = `${String(currentUser)}|${key}`
+  const [value, setValue] = useState(() => loadAndParseLocalStorage<T>(userKey))
+
+  const storeValue = useCallback(
+    (newValue: T | undefined) => {
+      if (newValue === undefined) {
+        localStorage.removeItem(userKey)
+      } else {
+        localStorage.setItem(userKey, JSON.stringify(newValue))
+      }
+      setValue(newValue)
+    },
+    [userKey],
+  )
+
+  useEffect(() => {
+    function handleChange(event: StorageEvent) {
+      if (event.storageArea === localStorage && event.key === userKey) {
+        setValue(loadAndParseLocalStorage<T>(userKey))
+      }
+    }
+    window.addEventListener('storage', handleChange)
+
+    return () => {
+      window.removeEventListener('storage', handleChange)
+    }
+  }, [userKey])
+
+  return [value, storeValue]
 }

@@ -234,6 +234,15 @@ export interface HotkeyProp {
   ctrlKey?: boolean
 }
 
+export function keyEventMatches(event: KeyboardEvent, hotkey: HotkeyProp) {
+  return (
+    event.keyCode === hotkey.keyCode &&
+    event.altKey === !!hotkey.altKey &&
+    event.shiftKey === !!hotkey.shiftKey &&
+    event.ctrlKey === !!hotkey.ctrlKey
+  )
+}
+
 export interface ButtonHotkeyProps {
   // NOTE(tec27): The typings encode null-initialized refs as readonly, but there doesn't seem to be
   // any different handling on the React side, so converting them to MutableRefObjects in this case
@@ -254,13 +263,7 @@ export function useButtonHotkey({ ref, disabled, hotkey }: ButtonHotkeyProps) {
     onKeyDown: (event: KeyboardEvent) => {
       const hotkeys = Array.isArray(hotkey) ? hotkey : [hotkey]
       for (const hotkey of hotkeys) {
-        if (
-          !disabled &&
-          event.keyCode === hotkey.keyCode &&
-          event.altKey === !!hotkey.altKey &&
-          event.shiftKey === !!hotkey.shiftKey &&
-          event.ctrlKey === !!hotkey.ctrlKey
-        ) {
+        if (!disabled && keyEventMatches(event, hotkey)) {
           ref.current?.click()
 
           return true

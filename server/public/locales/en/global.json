@@ -731,7 +731,8 @@
     },
     "activity": {
       "finding": "Finding…",
-      "findMatch": "Find match"
+      "findMatch": "Find match",
+      "title": "Matchmaking"
     },
     "disabledCard": {
       "days": "Days",

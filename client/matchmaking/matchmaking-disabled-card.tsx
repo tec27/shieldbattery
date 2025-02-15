@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 import { MatchmakingType } from '../../common/matchmaking'
-import { DisabledCard, DisabledText } from '../activities/disabled-content'
 import { TransInterpolation } from '../i18n/i18next'
+import Card from '../material/card'
+import { shadow8dp } from '../material/shadows'
 import { useAppSelector } from '../redux-hooks'
 import { colorTextSecondary } from '../styles/colors'
-import { Headline3, Headline5, Headline6, headline6, overline } from '../styles/typography'
+import { body1, Headline3, Headline5, Headline6, headline6, overline } from '../styles/typography'
 
 const dateFormat = new Intl.DateTimeFormat(navigator.language, {
   year: 'numeric',
@@ -16,6 +17,24 @@ const dateFormat = new Intl.DateTimeFormat(navigator.language, {
   minute: '2-digit',
   timeZoneName: 'short',
 })
+
+export const DisabledCard = styled(Card)`
+  ${shadow8dp};
+
+  position: relative;
+  width: 384px;
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`
+
+export const DisabledText = styled.span`
+  ${body1};
+  margin: 24px 0 16px 0;
+  overflow-wrap: break-word;
+`
 
 const ToText = styled.span`
   ${headline6};

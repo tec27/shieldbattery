@@ -1,21 +1,14 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import styled from 'styled-components'
 import { ReadonlyDeep } from 'type-fest'
 import { MapInfoJson } from '../../common/maps'
 import { useStableCallback } from '../state-hooks'
+import { CenteredContentContainer } from '../styles/centered-container'
 import { BrowseServerMaps } from './browse-server-maps'
 
 const LoadableLocalMaps = React.lazy(async () => ({
   default: (await import('./browse-local-maps')).BrowseLocalMaps,
 }))
-
-const Container = styled.div`
-  width: 100%;
-  max-width: calc(1248px + var(--pixel-shove-x));
-  height: 100%;
-  padding: 0 24px 0 calc(24px + var(--pixel-shove-x));
-`
 
 export function MapsRoot() {
   const { t } = useTranslation()
@@ -33,7 +26,7 @@ export function MapsRoot() {
   })
 
   return (
-    <Container>
+    <CenteredContentContainer>
       {IS_ELECTRON && browsingLocalMaps ? (
         <LoadableLocalMaps onMapSelect={onMapUpload} />
       ) : (
@@ -43,6 +36,6 @@ export function MapsRoot() {
           uploadedMap={uploadedMap}
         />
       )}
-    </Container>
+    </CenteredContentContainer>
   )
 }

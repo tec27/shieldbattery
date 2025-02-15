@@ -15,20 +15,18 @@ import {
   matchmakingTypeToLabel,
 } from '../../common/matchmaking'
 import { urlPath } from '../../common/urls'
-import { closeOverlay } from '../activities/action-creators'
-import { DisabledOverlay } from '../activities/disabled-content'
 import { useTrackPageView } from '../analytics/analytics'
 import { useSelfUser } from '../auth/auth-utils'
 import { ComingSoon } from '../coming-soon/coming-soon'
 import { useKeyListener } from '../keyboard/key-listener'
 import { getInstantaneousSelfRank } from '../ladder/action-creators'
-import { JsonLocalStorageValue } from '../local-storage'
 import { RaisedButton } from '../material/button'
 import { ScrollDivider, useScrollIndicatorState } from '../material/scroll-indicator'
 import { TabItem, Tabs } from '../material/tabs'
 import { Tooltip } from '../material/tooltip'
 import { LoadingDotsArea } from '../progress/dots'
 import { useAppDispatch, useAppSelector } from '../redux-hooks'
+import { useUserLocalStorageValue } from '../state-hooks'
 import {
   amberA400,
   background600,
@@ -36,6 +34,7 @@ import {
   colorError,
   colorTextFaint,
   colorTextSecondary,
+  dialogScrim,
 } from '../styles/colors'
 import {
   Headline5,
@@ -97,6 +96,23 @@ const TabArea = styled.div`
   flex-shrink: 0;
 `
 
+const DisabledOverlay = styled.div`
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  background-color: rgb(from ${dialogScrim} r g b / 0.5);
+  contain: strict;
+  z-index: 100;
+`
+
 interface DisabledContentsProps {
   matchmakingType: MatchmakingType
   isMatchmakingDisabled: boolean
@@ -119,11 +135,6 @@ function DisabledContents(props: DisabledContentsProps) {
 // TODO(tec27): Remove this once 3v3 is added as a "real" matchmaking type
 type ExpandedMatchmakingType = MatchmakingType | '3v3'
 
-// TODO(tec27): Write a hook for user-specific storage of this
-const lastActiveTabStorage = new JsonLocalStorageValue<ExpandedMatchmakingType>(
-  'matchmaking.findMatch.lastActiveTab',
-)
-
 function normalizeExpandedMatchmakingType(type?: string): ExpandedMatchmakingType {
   switch (type) {
     case MatchmakingType.Match1v1:
@@ -138,7 +149,10 @@ function normalizeExpandedMatchmakingType(type?: string): ExpandedMatchmakingTyp
 
 export function FindMatch() {
   const { t } = useTranslation()
-  const lastActiveTab = normalizeExpandedMatchmakingType(lastActiveTabStorage.getValue())
+  const [storedLastActiveTab, setLastActiveTab] = useUserLocalStorageValue<ExpandedMatchmakingType>(
+    'matchmaking.findMatch.lastActiveTab',
+  )
+  const lastActiveTab = normalizeExpandedMatchmakingType(storedLastActiveTab)
   const [activeTab, setActiveTab] = useState(lastActiveTab)
   useTrackPageView(urlPath`/matchmaking/find/${activeTab}`)
 
@@ -152,10 +166,13 @@ export function FindMatch() {
   })
   const formRef = useRef<FindMatchFormRef>(null)
 
-  const onTabChange = useCallback((tab: ExpandedMatchmakingType) => {
-    lastActiveTabStorage.setValue(tab)
-    setActiveTab(tab)
-  }, [])
+  const onTabChange = useCallback(
+    (tab: ExpandedMatchmakingType) => {
+      setLastActiveTab(tab)
+      setActiveTab(tab)
+    },
+    [setLastActiveTab],
+  )
 
   const onSubmit = useCallback(
     (prefs: Immutable<MatchmakingPreferences>) => {
@@ -164,7 +181,6 @@ export function FindMatch() {
       }
 
       dispatch(findMatch(activeTab, prefs))
-      dispatch(closeOverlay() as any)
     },
     [activeTab, dispatch],
   )

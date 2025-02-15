@@ -5,9 +5,11 @@ import styled, { css } from 'styled-components'
 import { Link, useRoute } from 'wouter'
 import { Avatar } from './avatars/avatar'
 import { MaterialIcon } from './icons/material/material-icon'
-import { HotkeyProp, IconButton, useButtonHotkey } from './material/button'
+import { useKeyListener } from './keyboard/key-listener'
+import { HotkeyProp, IconButton, keyEventMatches, useButtonHotkey } from './material/button'
 import { emphasizedAccelerateEasing, emphasizedDecelerateEasing } from './material/curve-constants'
 import { Tooltip } from './material/tooltip'
+import { push } from './navigation/routing'
 import { NotificationsButton } from './notifications/activity-bar-entry'
 import { useAppDispatch, useAppSelector } from './redux-hooks'
 import { openSettings } from './settings/action-creators'
@@ -15,16 +17,13 @@ import { useMultiRef, useStableCallback } from './state-hooks'
 import { caption, singleLine, sofiaSans } from './styles/typography'
 
 const ALT_A = { keyCode: keycode('a'), altKey: true }
-// FIXME: lobbies
 const ALT_B = { keyCode: keycode('b'), altKey: true }
 // FIXME: create lobby
 const ALT_C = { keyCode: keycode('c'), altKey: true }
 const ALT_D = { keyCode: keycode('d'), altKey: true }
-// FIXME: matchmaking (find match)
 const ALT_F = { keyCode: keycode('f'), altKey: true }
 const ALT_G = { keyCode: keycode('g'), altKey: true }
 const ALT_H = { keyCode: keycode('h'), altKey: true }
-// FIXME: join lobby
 const ALT_J = { keyCode: keycode('j'), altKey: true }
 const ALT_M = { keyCode: keycode('m'), altKey: true }
 const ALT_O = { keyCode: keycode('o'), altKey: true }
@@ -527,6 +526,25 @@ function AppBar({
   useButtonHotkey({ ref: settingsButtonRef, hotkey: ALT_S })
   const chatButtonRef = useRef<HTMLButtonElement>(null)
   useButtonHotkey({ ref: chatButtonRef, hotkey: ALT_H })
+
+  useKeyListener({
+    onKeyDown: (event: KeyboardEvent) => {
+      if (keyEventMatches(event, ALT_F)) {
+        if (location.pathname !== '/play/matchmaking') {
+          push('/play/matchmaking')
+        }
+        return true
+      }
+      if (keyEventMatches(event, ALT_B) || keyEventMatches(event, ALT_J)) {
+        if (location.pathname !== '/play/lobbies') {
+          push('/play/lobbies')
+        }
+        return true
+      }
+
+      return false
+    },
+  })
 
   return (
     <AppBarRoot>
